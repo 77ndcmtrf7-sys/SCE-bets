@@ -1,15 +1,18 @@
 {
   "name": "kolbo-market",
   "version": "1.0.0",
-  "description": "שוק תחזיות למכללה 🎓",
+  "description": "שוק תחזיות למכללה",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "sqlite3": "^5.1.7"
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
