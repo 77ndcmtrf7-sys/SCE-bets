@@ -330,14 +330,27 @@ body::after {
 }
 .logout-btn:hover { border-color: var(--no); color: var(--no); background: var(--no-bg); }
 
-/* ===== MOBILE NAV ===== */
+/* ===== MOBILE ===== */
 @media (max-width: 600px) {
-  .navbar { padding: 0 16px; gap: 8px; }
+  /* Navbar */
+  .navbar {
+    padding: 0 14px;
+    gap: 8px;
+    height: 54px;
+    position: fixed !important;
+    top: 0; left: 0; right: 0;
+  }
   .nav-center { display: none; }
-  .user-chip { display: none; }
-  .nav-logo { font-size: 15px; }
-  .balance-chip { padding: 4px 10px; }
+  .user-chip  { display: none; }
+  .nav-logo   { font-size: 16px; }
+  .balance-chip { padding: 4px 10px; font-size: 13px; }
+  .logout-btn { padding: 4px 10px; font-size: 12px; }
+  .theme-toggle { width: 30px; height: 30px; font-size: 15px; }
 
+  /* Push content below fixed navbar */
+  #app { padding-top: 54px; }
+
+  /* Bottom tabs */
   .mobile-tabs {
     display: flex !important;
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -346,13 +359,45 @@ body::after {
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 1px solid var(--border);
     z-index: 99;
-    padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    padding: 6px 0 max(8px, env(safe-area-inset-bottom));
   }
 
-  .section { padding: 20px 16px 80px !important; }
-  .markets-grid { grid-template-columns: 1fr !important; }
+  .mobile-tab { font-size: 10px; padding: 2px 10px; }
+  .mobile-tab .mtab-icon { font-size: 18px; }
+
+  /* Sections */
+  .section { padding: 16px 14px 90px !important; }
+  .section-header h1 { font-size: 24px; }
+
+  /* Cards */
+  .markets-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .market-card { padding: 16px; }
+
+  /* Suggest button */
+  .suggest-btn-wrap { margin-top: 20px; }
+  .suggest-pill-btn { font-size: 14px; padding: 11px 24px; }
+
+  /* Portfolio */
+  .portfolio-item { flex-wrap: wrap; gap: 8px; }
+  .p-question { width: 100%; }
+
+  /* Leaderboard */
+  .leaderboard-list { max-width: 100%; }
+
+  /* Admin */
   .admin-panel { grid-template-columns: 1fr !important; }
-  .portfolio-item { flex-wrap: wrap; }
+  .admin-inner-tabs { flex-wrap: wrap; }
+
+  /* Complaints */
+  .complaints-layout { grid-template-columns: 1fr !important; }
+  .complaint-form-card { position: static; }
+
+  /* Modal */
+  .modal-box { padding: 24px 18px; margin: 10px; }
+  .modal-box h2 { font-size: 16px; }
+
+  /* Auth */
+  .auth-box { padding: 32px 24px; margin: 16px; }
 }
 
 .mobile-tabs {
