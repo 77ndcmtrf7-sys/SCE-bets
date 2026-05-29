@@ -165,7 +165,7 @@ function renderMarkets(questions) {
           <span class="no-label">${noPct}% ${q.option_no||'לא'}</span>
         </div>
       </div>
-      ${dlHtml}
+
       <div class="card-footer">
         <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
         ${q.resolved
