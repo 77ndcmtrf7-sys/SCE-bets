@@ -1100,14 +1100,26 @@ body::after {
 
 /* ===== MOBILE SCROLL FIX ===== */
 @media (max-width: 600px) {
-  html, body {
-    overflow-x: hidden;
-    overflow-y: auto;
+  html {
+    overflow: auto;
     height: 100%;
+  }
+
+  body {
+    overflow-x: hidden;
+    overflow-y: scroll;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
   }
 
   .section {
     min-height: unset !important;
-    padding-bottom: 90px !important;
+    padding-bottom: 100px !important;
+    overflow: visible !important;
+  }
+
+  #app {
+    overflow: visible !important;
+    height: auto !important;
   }
 }
