@@ -1,10 +1,10 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --accent:      #00a3b4;
-  --accent-h:    #00b8cc;
-  --accent-dim:  rgba(0,163,180,0.12);
-  --accent-bdr:  rgba(0,163,180,0.28);
+  --accent:      #f59e0b;
+  --accent-h:    #fbbf24;
+  --accent-dim:  rgba(245,158,11,0.12);
+  --accent-bdr:  rgba(245,158,11,0.28);
   --yes:         #34c759;
   --yes-bg:      rgba(52,199,89,0.1);
   --yes-bdr:     rgba(52,199,89,0.25);
@@ -87,8 +87,8 @@ body::before {
   z-index: 0;
   opacity: 0;
   transition: opacity 0.3s;
-  background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0,163,180,0.13) 0%, transparent 70%),
-              radial-gradient(ellipse 60% 40% at 20% 0%, rgba(0,100,160,0.08) 0%, transparent 60%);
+  background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(245,158,11,0.10) 0%, transparent 70%),
+              radial-gradient(ellipse 60% 40% at 20% 0%, rgba(200,80,0,0.07) 0%, transparent 60%);
 }
 
 [data-theme="dark"] body::before { opacity: 1; }
@@ -160,9 +160,9 @@ body::before {
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 3px;
-  color: var(--accent);
+  color: #f59e0b;
   text-transform: uppercase;
-  border: 2px solid var(--accent);
+  border: 2px solid #f59e0b;
   padding: 4px 10px;
   border-radius: 6px;
   margin-bottom: 8px;
@@ -225,8 +225,8 @@ body::before {
 
 .auth-btn {
   width: 100%;
-  background: var(--accent); color: #fff;
-  border: none; border-radius: var(--radius-sm);
+  background: var(--accent); color: #1a0f00;
+  border: none; border-radius: 50px;
   font-family: 'Rubik', sans-serif;
   font-size: 15px; font-weight: 600;
   padding: 13px; cursor: pointer;
@@ -257,8 +257,8 @@ body::before {
 
 .nav-sce-badge {
   font-size: 10px; font-weight: 800;
-  letter-spacing: 2px; color: var(--accent);
-  border: 1.5px solid var(--accent);
+  letter-spacing: 2px; color: #f59e0b;
+  border: 1.5px solid #f59e0b;
   padding: 2px 6px; border-radius: 4px;
 }
 
@@ -277,7 +277,7 @@ body::before {
   color: var(--text2);
   font-family: 'Rubik', sans-serif;
   font-size: 14px; font-weight: 500;
-  padding: 6px 13px; border-radius: 8px;
+  padding: 6px 14px; border-radius: 50px;
   cursor: pointer; transition: all 0.15s;
   white-space: nowrap;
 }
@@ -357,8 +357,8 @@ body::before {
 
 .section-header { margin-bottom: 26px; }
 .section-header h1 {
-  font-size: 26px; font-weight: 800;
-  letter-spacing: -0.6px; color: var(--text); margin-bottom: 3px;
+  font-size: 32px; font-weight: 900;
+  letter-spacing: -1px; color: var(--text); margin-bottom: 3px;
 }
 .section-sub { color: var(--text2); font-size: 14px; }
 
@@ -379,7 +379,7 @@ body::before {
 .market-card.resolved { opacity:0.5; cursor:default; pointer-events:none; }
 
 .card-category {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
   text-transform: uppercase; color: var(--accent); margin-bottom: 7px;
 }
 .card-question { font-size: 15px; font-weight: 600; line-height:1.45; margin-bottom:6px; color:var(--text); }
@@ -781,9 +781,9 @@ body::before {
 .complaint-submit-btn {
   width: 100%;
   background: var(--accent);
-  color: #fff;
+  color: #1a0f00;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 50px;
   font-family: 'Rubik', sans-serif;
   font-size: 15px;
   font-weight: 600;

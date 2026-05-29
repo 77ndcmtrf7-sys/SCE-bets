@@ -332,7 +332,7 @@ async function createQuestion() {
     document.getElementById('new-question-deadline').value='';
     document.getElementById('new-option-yes').value='';
     document.getElementById('new-option-no').value='';
-    showToast('שאלה נוצרה בהצלחה','success'); loadAdminQuestions();
+    showToast('שאלה חדשה בשוק! 🔥','success'); loadAdminQuestions();
   } else { const d=await res.json(); showToast(d.error||'שגיאה','error'); }
 }
 
@@ -389,7 +389,7 @@ function renderAdminUsers(users) {
 async function deleteUser(id, name) {
   if (!confirm('למחוק את המשתמש "' + name + '"? פעולה זו אינה הפיכה.')) return;
   const res = await fetch('/api/admin/users/' + id, { method: 'DELETE', headers: authHeaders() });
-  if (res.ok) { showToast('משתמש נמחק', 'success'); loadAdminUsers(); }
+  if (res.ok) { showToast('ביי ביי 👋','success'); loadAdminUsers(); }
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }
 
