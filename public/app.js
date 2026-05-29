@@ -338,6 +338,7 @@ function renderMarkets(questions) {
     const noPct=100-yesPct;
     const dl=deadlineInfo(q.deadline);
     const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
+    const deptTag=q.department?`<div class="dept-tag">${q.department}</div>`:'';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}>
       ${deptTag}

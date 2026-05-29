@@ -1100,23 +1100,31 @@ body::after {
 
 /* ===== MOBILE SCROLL FIX ===== */
 @media (max-width: 600px) {
-  html { overflow-x: hidden; }
-  body { overflow-x: hidden; overflow-y: auto; }
-
-  .section { min-height: unset !important; }
-
-  /* Full height scrollable area between navbar and bottom tabs */
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: calc(100dvh - 54px);
-    overflow: hidden;
+  html, body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    height: 100%;
   }
 
-  .section.active {
+  #app {
+    height: calc(100dvh - 54px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Each section scrolls internally */
+  .section {
+    min-height: unset !important;
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px !important;
+  }
+
+  /* Sections with no content should not scroll */
+  .section.active:has(.empty-state) {
+    overflow-y: hidden;
   }
 }
