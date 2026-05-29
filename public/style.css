@@ -784,9 +784,9 @@ body::before {
 
 .complaint-submit-btn {
   width: 100%;
-  background: linear-gradient(135deg, #ff6eb4, #ff9f0a);
-  color: #fff;
-  border: none;
+  background: var(--bg4);
+  color: var(--text);
+  border: 1px solid var(--border2);
   border-radius: 50px;
   font-family: 'Rubik', sans-serif;
   font-size: 15px;
@@ -796,7 +796,7 @@ body::before {
   transition: all 0.2s;
 }
 
-.complaint-submit-btn:hover { background: linear-gradient(135deg, #ff4da6, #f59e0b); }
+.complaint-submit-btn:hover { background: var(--border2); }
 
 .complaint-error {
   color: var(--no);
@@ -871,6 +871,9 @@ body::before {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
 }
 
 .auth-logo {
