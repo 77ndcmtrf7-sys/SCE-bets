@@ -1143,3 +1143,53 @@ body::after {
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/* ===== CARD STATS ROW ===== */
+.card-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  direction: ltr;
+}
+
+.stat-yes {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--yes);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-no {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--no);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-mid {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+  padding: 0 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text3);
+  margin-right: 2px;
+}
+
+/* Deadline at bottom - subtle */
+.card-deadline {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 6px;
+  text-align: center;
+  padding-bottom: 2px;
+}
+.card-deadline.soon { color: var(--gold); }
+.card-deadline.expired { color: var(--no); }
