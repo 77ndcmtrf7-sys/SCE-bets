@@ -183,24 +183,7 @@ function renderMarkets(questions) {
         <span class="stat-label">bets</span>
       </div>
       ${dlHtml}
-      <div class="card-footer">
-        <div class="card-volume">
-          נפח: <span>${formatNum(total)} נק"ז</span>
-          <span style="color:var(--text3);margin-right:8px;">·</span>
-          <span style="color:var(--yes)">${q.yes_count||0}</span>
-          <span style="color:var(--text3);margin:0 4px;">vs</span>
-          <span style="color:var(--no)">${q.no_count||0}</span>
-          <span style="color:var(--text3);font-size:11px;margin-right:4px;"> משתתפים</span>
-        </div>
-        ${q.resolved
-          ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
-          :`<div class="bet-buttons">
-              <button class="bet-btn yes" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">${q.option_yes||'כן'}</button>
-              <button class="bet-btn no"  onclick="event.stopPropagation();openBetModal(${q.id},'NO')">${q.option_no||'לא'}</button>
-            </div>`
-        }
-      </div>
-    </div>`;
+          </div>`;
   }).join('');
 }
 
