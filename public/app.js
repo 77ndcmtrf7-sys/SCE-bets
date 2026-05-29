@@ -309,8 +309,8 @@ function renderAdminQuestions(questions) {
       <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${dl?` · סגירה: ${dl}`:''}  · ${q.resolved?`נסגר — ${q.result}`:'פעיל'}</div>
       <div class="admin-q-actions">
         ${!q.resolved?`
-          <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">כן ניצח</button>
-          <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">לא ניצח</button>`:''}
+          <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
+          <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`:''}
         <button class="admin-q-btn delete" onclick="deleteQuestion(${q.id})">מחק</button>
       </div>
     </div>`;
@@ -354,4 +354,40 @@ function showToast(msg,type='success'){
   const t=document.getElementById('toast');
   t.textContent=msg; t.className=`toast ${type} show`;
   setTimeout(()=>{t.className='toast';},3000);
+}
+
+// ===== ADMIN TABS =====
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll('.admin-inner-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('admin-tab-questions').style.display = tab==='questions' ? 'block' : 'none';
+  document.getElementById('admin-tab-users').style.display     = tab==='users'     ? 'block' : 'none';
+  if (tab==='users') loadAdminUsers();
+}
+
+// ===== ADMIN USERS =====
+async function loadAdminUsers() {
+  const res  = await fetch('/api/admin/users', { headers: authHeaders() });
+  const data = await res.json();
+  renderAdminUsers(data.users || []);
+}
+
+function renderAdminUsers(users) {
+  const list = document.getElementById('admin-users-list');
+  if (!users.length) { list.innerHTML = '<div style="color:var(--text3);font-size:13px;">אין משתמשים</div>'; return; }
+  list.innerHTML = users.map(u => `
+    <div class="admin-user-item">
+      <div class="admin-user-name">${u.display_name} <span style="color:var(--text3);font-weight:400;font-size:12px;">(${u.username})</span></div>
+      ${u.is_admin ? '<div class="admin-user-badge">מנהל</div>' : ''}
+      <div class="admin-user-balance">${formatNum(u.balance)} נק"ז</div>
+      ${!u.is_admin ? `<button class="admin-q-btn delete" onclick="deleteUser(${u.id}, '${u.display_name}')">מחק</button>` : ''}
+    </div>`
+  ).join('');
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(\`למחוק את המשתמש "\${name}"? פעולה זו אינה הפיכה.\`)) return;
+  const res = await fetch(\`/api/admin/users/\${id}\`, { method: 'DELETE', headers: authHeaders() });
+  if (res.ok) { showToast('משתמש נמחק', 'success'); loadAdminUsers(); }
+  else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }

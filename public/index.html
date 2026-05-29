@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#00a3b4" />
   <title>SCE Bets</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -81,7 +81,7 @@
   <section id="section-markets" class="section active">
     <div class="section-header">
       <h1>שאלות פתוחות</h1>
-      <p class="section-sub">הימר על מה שאתה בטוח בו</p>
+      <p class="section-sub">תחזיות, ניחושים, ואולי קצת מזל 🎯</p>
     </div>
     <div id="markets-grid" class="markets-grid"></div>
   </section>
@@ -96,8 +96,8 @@
 
   <section id="section-leaderboard" class="section">
     <div class="section-header">
-      <h1>טבלת מובילים</h1>
-      <p class="section-sub">מי הכי חכם ב-SCE?</p>
+      <h1>הטופ של הטופ</h1>
+      <p class="section-sub">מי שולט בנק"ז של המכללה?</p>
     </div>
     <div id="leaderboard-list" class="leaderboard-list"></div>
   </section>
@@ -107,7 +107,11 @@
       <h1>ניהול</h1>
       <p class="section-sub">יצירה וניהול שאלות</p>
     </div>
-    <div class="admin-panel">
+    <div class="admin-inner-tabs">
+        <button class="admin-inner-tab active" onclick="switchAdminTab('questions', this)">שאלות</button>
+        <button class="admin-inner-tab" onclick="switchAdminTab('users', this)">משתמשים</button>
+      </div>
+    <div id="admin-tab-questions" class="admin-panel">
       <div class="admin-card">
         <h3>שאלה חדשה</h3>
         <input type="text" id="new-question-text" placeholder="טקסט השאלה..." class="admin-input" />
@@ -124,6 +128,12 @@
       <div class="admin-card">
         <h3>שאלות קיימות</h3>
         <div id="admin-questions-list"></div>
+      </div>
+    </div>
+    <div id="admin-tab-users" style="display:none">
+      <div class="admin-card">
+        <h3>ניהול משתמשים</h3>
+        <div id="admin-users-list"></div>
       </div>
     </div>
   </section>

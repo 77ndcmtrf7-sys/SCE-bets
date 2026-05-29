@@ -238,4 +238,29 @@ app.get('/api/leaderboard', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// --- Admin: list users ---
+app.get('/api/admin/users', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id, username, display_name, balance, is_admin FROM users ORDER BY balance DESC');
+    res.json({ users: rows });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Admin: delete user ---
+app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'משתמש לא נמצא' });
+    if (rows[0].is_admin) return res.status(400).json({ error: 'לא ניתן למחוק מנהל' });
+    await client.query('BEGIN');
+    await client.query('DELETE FROM bets WHERE user_id = $1', [req.params.id]);
+    await client.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    await client.query('COMMIT');
+    res.json({ success: true });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
 app.listen(PORT, () => console.log(`🎓 SCE Bets רץ על http://localhost:${PORT}`));
