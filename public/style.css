@@ -93,8 +93,8 @@ body::before {
 
 [data-theme="dark"] body::before { opacity: 1; }
 @media (prefers-color-scheme: dark) { body:not([data-theme="light"])::before { opacity: 1; } }
-[data-theme="light"] body::before { opacity: 0 !important; }
-@media (prefers-color-scheme: light) { body:not([data-theme="dark"])::before { opacity: 0 !important; } }
+[data-theme="light"] body::before { opacity: 1; }
+@media (prefers-color-scheme: light) { body:not([data-theme="dark"])::before { opacity: 1; } }
 
 #app, #auth-overlay { position: relative; z-index: 1; }
 
@@ -857,19 +857,31 @@ body::before {
   padding: 40px 20px;
 }
 
-/* ===== LOGO GRADIENT ===== */
+/* ===== LOGO GRADIENT ANIMATED ===== */
+@keyframes lava {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .nav-logo {
-  background: linear-gradient(90deg, #ff6eb4, #ff9f0a);
+  background: linear-gradient(270deg, #ff6eb4, #ff9f0a, #ff6eb4, #ffb347);
+  background-size: 300% 300%;
+  animation: lava 4s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .auth-logo {
-  background: linear-gradient(90deg, #ff6eb4, #ff9f0a);
+  background: linear-gradient(270deg, #ff6eb4, #ff9f0a, #ff6eb4, #ffb347);
+  background-size: 300% 300%;
+  animation: lava 4s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-size: 32px;
+  letter-spacing: -1px;
 }
 
 /* ===== CATEGORY TAG COLORS ===== */
@@ -877,3 +889,26 @@ body::before {
 .complaint-author { color: #ff6eb4; }
 .p-status.open { background: rgba(255,110,180,0.1); color: #ff6eb4; }
 .lb-you { color: #ff6eb4; }
+
+/* ===== TONED DOWN SECONDARY ELEMENTS ===== */
+.nav-tab.active {
+  background: var(--bg4);
+  color: var(--text);
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6eb4, #ff9f0a);
+  border-radius: 2px;
+}
+
+/* resolved badge uses neutral color */
+.resolved-badge.YES { background: var(--yes-bg); color: var(--yes); }
+.resolved-badge.NO  { background: var(--no-bg);  color: var(--no); }
