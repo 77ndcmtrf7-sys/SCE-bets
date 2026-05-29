@@ -18,10 +18,10 @@
 
 /* ===== LIGHT MODE ===== */
 :root, [data-theme="light"] {
-  --bg:        #f5f5f7;
-  --bg2:       #ffffff;
-  --bg3:       #f0f0f2;
-  --bg4:       #e8e8ed;
+  --bg:        #f5f0eb;
+  --bg2:       #fdf8f3;
+  --bg3:       #ede8e2;
+  --bg4:       #e2ddd8;
   --border:    rgba(0,0,0,0.08);
   --border2:   rgba(0,0,0,0.13);
   --text:      #1d1d1f;
@@ -85,7 +85,8 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
   background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,110,180,0.12) 0%, transparent 70%),
               radial-gradient(ellipse 60% 40% at 20% 0%, rgba(255,100,0,0.07) 0%, transparent 60%);
 }
@@ -244,7 +245,7 @@ body::before {
 .navbar {
   position: sticky; top: 0; z-index: 100;
   display: flex; align-items: center; gap: 12px;
-  padding: 0 24px; height: 56px;
+  padding: 0 32px; height: 68px;
   background: var(--nav-bg);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -275,8 +276,8 @@ body::before {
   background: transparent; border: none;
   color: var(--text2);
   font-family: 'Rubik', sans-serif;
-  font-size: 14px; font-weight: 500;
-  padding: 6px 14px; border-radius: 50px;
+  font-size: 15px; font-weight: 500;
+  padding: 8px 18px; border-radius: 50px;
   cursor: pointer; transition: all 0.15s;
   white-space: nowrap;
 }
@@ -447,8 +448,10 @@ body::before {
   box-shadow:var(--shadow-sm); transition:box-shadow 0.2s;
 }
 .lb-item:hover { box-shadow:var(--shadow); }
-.lb-item.top1 { border-color:rgba(255,159,10,0.3); }
-.lb-rank { font-size:17px; width:26px; text-align:center; flex-shrink:0; }
+.lb-item.top1 { border-color: rgba(255,215,0,0.5);  background: linear-gradient(135deg, rgba(255,215,0,0.08), transparent); }
+.lb-item.top2 { border-color: rgba(192,192,192,0.5); background: linear-gradient(135deg, rgba(192,192,192,0.08), transparent); }
+.lb-item.top3 { border-color: rgba(205,127,50,0.5);  background: linear-gradient(135deg, rgba(205,127,50,0.08), transparent); }
+.lb-rank { font-size:22px; width:32px; text-align:center; flex-shrink:0; }
 .lb-name { flex:1; font-weight:600; font-size:14px; }
 .lb-you  { font-size:11px; color:var(--accent); font-weight:500; margin-right:5px; }
 .lb-balance { font-weight:700; font-size:14px; font-variant-numeric:tabular-nums; }
