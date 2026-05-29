@@ -29,7 +29,7 @@ function updateToggleBtn() {
   if (!btn) return;
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
     (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.textContent = isDark ? '☀️' : '🌑';
   btn.title = isDark ? 'עבור למצב בהיר' : 'עבור למצב כהה';
   btn.parentElement.classList.toggle('dark-active', isDark);
 }
@@ -171,9 +171,9 @@ function renderMarkets(questions) {
           נפח: <span>${formatNum(total)} נק"ז</span>
           <span style="color:var(--text3);margin-right:8px;">·</span>
           <span style="color:var(--yes)">${q.yes_count||0}</span>
-          <span style="color:var(--text3)"> vs </span>
+          <span style="color:var(--text3);margin:0 4px;">vs</span>
           <span style="color:var(--no)">${q.no_count||0}</span>
-          <span style="color:var(--text3);font-size:11px;"> משתתפים</span>
+          <span style="color:var(--text3);font-size:11px;margin-right:4px;"> משתתפים</span>
         </div>
         ${q.resolved
           ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
@@ -215,7 +215,7 @@ function updateToggleBtn() {
   if (!btn) return;
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
     (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.textContent = isDark ? '☀️' : '🌑';
   btn.title = isDark ? 'עבור למצב בהיר' : 'עבור למצב כהה';
   btn.parentElement.classList.toggle('dark-active', isDark);
 }
@@ -357,9 +357,9 @@ function renderMarkets(questions) {
           נפח: <span>${formatNum(total)} נק"ז</span>
           <span style="color:var(--text3);margin-right:8px;">·</span>
           <span style="color:var(--yes)">${q.yes_count||0}</span>
-          <span style="color:var(--text3)"> vs </span>
+          <span style="color:var(--text3);margin:0 4px;">vs</span>
           <span style="color:var(--no)">${q.no_count||0}</span>
-          <span style="color:var(--text3);font-size:11px;"> משתתפים</span>
+          <span style="color:var(--text3);font-size:11px;margin-right:4px;"> משתתפים</span>
         </div>
         ${q.resolved
           ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
@@ -456,7 +456,7 @@ async function loadPortfolio() {
 
 function renderPortfolio(bets) {
   const list=document.getElementById('portfolio-list');
-  if(!bets.length){list.innerHTML=`<div class="empty-state"><span class="emoji">📭</span>עדיין לא הנחת הימורים</div>`;return;}
+  if(!bets.length){list.innerHTML=`<div class="empty-state"><span class="emoji">📭</span>אין בט</div>`;return;}
   list.innerHTML=bets.map(b=>{
     let cls,txt;
     if(!b.resolved){cls='open';txt='פעיל';}
@@ -484,7 +484,7 @@ function renderLeaderboard(users) {
   list.innerHTML=users.map((u,i)=>`
     <div class="lb-item ${tops[i]||''}">
       <div class="lb-rank">${medals[i]||(i+1)}</div>
-      <div class="lb-name">${u.display_name}${u.id===currentUser.id?'<span class="lb-you">(אתה)</span>':''}</div>
+      <div class="lb-name">${u.display_name}${u.id===currentUser.id?'<span class="lb-you">(אתה)</span>':''}${i===0?'<span style="font-size:11px;background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid rgba(255,215,0,0.3);border-radius:20px;padding:2px 8px;margin-right:6px;">מצטיין דיקן</span>':''}</div>
       <div class="lb-balance">${formatNum(u.balance)}<span class="lb-balance-unit">נק"ז</span></div>
     </div>`).join('');
 }

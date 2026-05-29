@@ -186,7 +186,7 @@ body::after {
 }
 
 .auth-sce-logo {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: 3px;
   color: #ff6eb4;
@@ -286,10 +286,10 @@ body::after {
 .nav-logo-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .nav-sce-badge {
-  font-size: 10px; font-weight: 800;
+  font-size: 13px; font-weight: 800;
   letter-spacing: 2px; color: #ff6eb4;
-  border: 1.5px solid #ff6eb4;
-  padding: 2px 6px; border-radius: 4px;
+  border: 2px solid #ff6eb4;
+  padding: 3px 9px; border-radius: 6px;
 }
 
 .nav-logo {
@@ -1122,4 +1122,17 @@ body::after {
     overflow: visible !important;
     height: auto !important;
   }
+}
+
+/* ===== DEAN BADGE ===== */
+.lb-dean-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ff6eb4, #ff9f0a);
+  color: #fff;
+  margin-right: 6px;
+  vertical-align: middle;
 }
