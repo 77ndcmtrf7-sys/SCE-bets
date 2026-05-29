@@ -523,10 +523,10 @@ body::after {
   box-shadow:var(--shadow-sm); transition:box-shadow 0.2s;
 }
 .lb-item:hover { box-shadow:var(--shadow); }
-.lb-item.top1 { border-color: rgba(255,215,0,0.5);  background: linear-gradient(135deg, rgba(255,215,0,0.08), transparent); }
-.lb-item.top2 { border-color: rgba(192,192,192,0.5); background: linear-gradient(135deg, rgba(192,192,192,0.08), transparent); }
-.lb-item.top3 { border-color: rgba(205,127,50,0.5);  background: linear-gradient(135deg, rgba(205,127,50,0.08), transparent); }
-.lb-rank { font-size:22px; width:32px; text-align:center; flex-shrink:0; }
+.lb-item.top1 { border-color: rgba(255,200,0,0.6);   background: linear-gradient(135deg, rgba(255,200,0,0.10), transparent); }
+.lb-item.top2 { border-color: rgba(150,180,220,0.6); background: linear-gradient(135deg, rgba(150,180,220,0.10), transparent); }
+.lb-item.top3 { border-color: rgba(180,100,30,0.6);  background: linear-gradient(135deg, rgba(180,100,30,0.10), transparent); }
+.lb-rank { font-size:20px; width:32px; text-align:center; flex-shrink:0; font-weight:700; color:var(--text2); }
 .lb-name { flex:1; font-weight:600; font-size:14px; }
 .lb-you  { font-size:11px; color:var(--accent); font-weight:500; margin-right:5px; }
 .lb-balance { font-weight:700; font-size:14px; font-variant-numeric:tabular-nums; }

@@ -483,7 +483,12 @@ function renderLeaderboard(users) {
   const medals=['🥇','🥈','🥉'],tops=['top1','top2','top3'];
   list.innerHTML=users.map((u,i)=>`
     <div class="lb-item ${tops[i]||''}">
-      <div class="lb-rank">${medals[i]||(i+1)}</div>
+      <div class="lb-rank">${
+        i===0 ? '<span style="font-size:22px;filter:hue-rotate(0deg);">🥇</span>' :
+        i===1 ? '<span style="font-size:22px;filter:grayscale(0.2) brightness(1.4);">🥈</span>' :
+        i===2 ? '<span style="font-size:22px;filter:sepia(0.8) saturate(1.5);">🥉</span>' :
+        (i+1)
+      }</div>
       <div class="lb-name">${u.display_name}${u.id===currentUser.id?'<span class="lb-you">(אתה)</span>':''}${i===0?'<span style="font-size:11px;background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid rgba(255,215,0,0.3);border-radius:20px;padding:2px 8px;margin-right:6px;">מצטיין דיקן</span>':''}</div>
       <div class="lb-balance">${formatNum(u.balance)}<span class="lb-balance-unit">נק"ז</span></div>
     </div>`).join('');
@@ -730,7 +735,7 @@ async function submitComplaint() {
     selectedStars = 0;
     highlightStars(0);
     document.getElementById('star-count').textContent = '0 / 10';
-    showToast('התלונה נשמעה (אולי) 📮', 'success');
+    showToast('הבקשה נשמעה (אולי) 📮', 'success');
     loadComplaints();
   } else {
     const d = await res.json();
