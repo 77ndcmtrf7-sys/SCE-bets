@@ -130,7 +130,7 @@ body::before {
 /* ===== AUTH ===== */
 .auth-overlay {
   position: fixed; inset: 0;
-  background: var(--bg);
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
   z-index: 1000;
   padding: 20px;
@@ -138,12 +138,14 @@ body::before {
 
 .auth-box {
   background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  border: 1px solid var(--border2);
+  border-radius: 24px;
   padding: 40px 36px;
   width: 100%; max-width: 390px;
   box-shadow: var(--shadow-lg);
   animation: slideUp 0.45s cubic-bezier(0.16,1,0.3,1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 @keyframes slideUp {
