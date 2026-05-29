@@ -1100,19 +1100,23 @@ body::after {
 
 /* ===== MOBILE SCROLL FIX ===== */
 @media (max-width: 600px) {
-  html, body { overflow-x: hidden; }
-  
-  .section {
-    min-height: unset;
+  html { overflow-x: hidden; }
+  body { overflow-x: hidden; overflow-y: auto; }
+
+  .section { min-height: unset !important; }
+
+  /* Full height scrollable area between navbar and bottom tabs */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 54px);
+    overflow: hidden;
   }
-  
-  /* Only show scrollbar when content overflows */
-  #section-markets,
-  #section-portfolio,
-  #section-leaderboard,
-  #section-complaints,
-  #section-admin {
+
+  .section.active {
+    flex: 1;
     overflow-y: auto;
-    max-height: calc(100dvh - 54px - 60px);
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 }

@@ -323,7 +323,9 @@ async function initSuggestions() {
     )
   `);
 }
-initSuggestions().catch(console.error);
+initSuggestions().then(async () => {
+  try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS department TEXT DEFAULT ''"); } catch(e) {}
+}).catch(console.error);
 
 // Submit suggestion
 app.post('/api/suggestions', auth, async (req, res) => {
