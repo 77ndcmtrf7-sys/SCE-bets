@@ -85,8 +85,6 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0;
-  transition: opacity 0.3s;
   background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,110,180,0.12) 0%, transparent 70%),
               radial-gradient(ellipse 60% 40% at 20% 0%, rgba(255,100,0,0.07) 0%, transparent 60%);
 }
@@ -915,41 +913,7 @@ body::before {
 .resolved-badge.YES { background: var(--yes-bg); color: var(--yes); }
 .resolved-badge.NO  { background: var(--no-bg);  color: var(--no); }
 
-/* ===== LIGHT MODE GRADIENT ===== */
-@media (prefers-color-scheme: light) {
-  body:not([data-theme="dark"])::before {
-    background:
-      radial-gradient(ellipse 120% 80% at 50% 115%, rgba(255,140,0,0.22) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 60% at 10% -5%,  rgba(255,80,160,0.16) 0%, transparent 55%),
-      radial-gradient(ellipse 70% 55% at 90% 50%,  rgba(180,60,255,0.10) 0%, transparent 55%);
-    opacity: 1 !important;
-  }
-  body:not([data-theme="dark"])::after {
-    background:
-      radial-gradient(ellipse 120% 80% at 50% 115%, rgba(180,60,255,0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 80% 60% at 10% -5%,  rgba(255,140,0,0.14)  0%, transparent 55%),
-      radial-gradient(ellipse 70% 55% at 90% 50%,  rgba(255,80,160,0.12) 0%, transparent 55%);
-    opacity: 1 !important;
-  }
-}
 
-[data-theme="light"] body::before {
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 115%, rgba(255,140,0,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 80% 60% at 10% -5%,  rgba(255,80,160,0.16) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 55% at 90% 50%,  rgba(180,60,255,0.10) 0%, transparent 55%);
-  opacity: 1 !important;
-}
-
-[data-theme="light"] body::after {
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 115%, rgba(180,60,255,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 80% 60% at 10% -5%,  rgba(255,140,0,0.14)  0%, transparent 55%),
-    radial-gradient(ellipse 70% 55% at 90% 50%,  rgba(255,80,160,0.12) 0%, transparent 55%);
-  opacity: 1 !important;
-}
-
-/* ===== NAVBAR EGGSHELL ===== */
 [data-theme="light"] .navbar,
 @media (prefers-color-scheme: light) {
   body:not([data-theme="dark"]) .navbar {
