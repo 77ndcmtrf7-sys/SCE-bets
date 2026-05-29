@@ -1102,29 +1102,12 @@ body::after {
 @media (max-width: 600px) {
   html, body {
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: auto;
     height: 100%;
   }
 
-  #app {
-    height: calc(100dvh - 54px);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Each section scrolls internally */
   .section {
     min-height: unset !important;
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 80px !important;
-  }
-
-  /* Sections with no content should not scroll */
-  .section.active:has(.empty-state) {
-    overflow-y: hidden;
+    padding-bottom: 90px !important;
   }
 }
