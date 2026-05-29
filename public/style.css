@@ -51,7 +51,7 @@
 }}
 
 [data-theme="dark"] {
-  --bg:        #0d0d0f;
+  --bg:        #0a0c10;
   --bg2:       #1c1c1e;
   --bg3:       #2c2c2e;
   --bg4:       #3a3a3c;
@@ -76,7 +76,25 @@ body {
   direction: rtl;
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s, color 0.3s;
+  position: relative;
 }
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0,163,180,0.13) 0%, transparent 70%),
+              radial-gradient(ellipse 60% 40% at 20% 0%, rgba(0,100,160,0.08) 0%, transparent 60%);
+}
+
+[data-theme="dark"] body::before { opacity: 1; }
+@media (prefers-color-scheme: dark) { body:not([data-theme="light"])::before { opacity: 1; } }
+
+#app, #auth-overlay { position: relative; z-index: 1; }
 
 /* ===== THEME TOGGLE ===== */
 .theme-toggle {
