@@ -152,6 +152,192 @@ function renderMarkets(questions) {
     const noPct=100-yesPct;
     const dl=deadlineInfo(q.deadline);
     const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
+    const deptTag=q.department?`<div class="dept-tag">${q.department}</div>`:'';
+    return `
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}> 
+      ${deptTag}
+      <div class="card-category">${q.category||'כללי'}</div>
+      <div class="card-question">${q.question}</div>
+      ${dlHtml}
+      <div class="card-bar-wrap">
+        <div class="card-bar"><div class="card-bar-fill" style="width:${yesPct}%"></div></div>
+        <div class="card-bar-labels">
+          <span class="yes-label">${q.option_yes||'כן'} ${yesPct}%</span>
+          <span class="no-label">${noPct}% ${q.option_no||'לא'}</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-volume">
+          נפח: <span>${formatNum(total)} נק"ז</span>
+          <span style="color:var(--text3);margin-right:8px;">·</span>
+          <span style="color:var(--yes)">${q.yes_count||0}</span>
+          <span style="color:var(--text3)"> vs </span>
+          <span style="color:var(--no)">${q.no_count||0}</span>
+          <span style="color:var(--text3);font-size:11px;"> משתתפים</span>
+        </div>
+        ${q.resolved
+          ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
+          :`<div class="bet-buttons">
+              <button class="bet-btn yes" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">${q.option_yes||'כן'}</button>
+              <button class="bet-btn no"  onclick="event.stopPropagation();openBetModal(${q.id},'NO')">${q.option_no||'לא'}</button>
+            </div>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+
+// ===== THEME =====
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+  // sync toggle button appearance
+  updateToggleBtn();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  let next;
+  if (!current) next = sys === 'dark' ? 'light' : 'dark';
+  else next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateToggleBtn();
+}
+
+function updateToggleBtn() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.title = isDark ? 'עבור למצב בהיר' : 'עבור למצב כהה';
+  btn.parentElement.classList.toggle('dark-active', isDark);
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateToggleBtn);
+
+// ===== INIT =====
+window.onload = () => {
+  initTheme();
+  const token = localStorage.getItem('token');
+  if (token) tryAutoLogin();
+};
+
+async function tryAutoLogin() {
+  const res = await fetch(`${API}/api/me`, { headers: authHeaders() });
+  if (res.ok) { const d = await res.json(); loginSuccess(d); }
+  else localStorage.removeItem('token');
+}
+
+// ===== AUTH =====
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) =>
+    t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+  document.getElementById('login-form').style.display    = tab==='login'    ? 'block':'none';
+  document.getElementById('register-form').style.display = tab==='register' ? 'block':'none';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function login() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username||!password) return showAuthError('נא למלא את כל השדות');
+  const res = await fetch(`${API}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+  const data = await res.json();
+  if (!res.ok) return showAuthError(data.error||'שגיאה בכניסה');
+  localStorage.setItem('token',data.token);
+  loginSuccess(data.user);
+}
+
+async function register() {
+  const username    = document.getElementById('reg-username').value.trim();
+  const displayName = document.getElementById('reg-display').value.trim();
+  const password    = document.getElementById('reg-password').value;
+  if (!username||!displayName||!password) return showAuthError('נא למלא את כל השדות');
+  const res = await fetch(`${API}/api/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,display_name:displayName,password})});
+  const data = await res.json();
+  if (!res.ok) return showAuthError(data.error||'שגיאה בהרשמה');
+  localStorage.setItem('token',data.token);
+  loginSuccess(data.user);
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('nav-username').textContent = user.display_name;
+  document.getElementById('nav-balance').textContent  = formatNum(user.balance);
+  if (user.is_admin) {
+    document.getElementById('admin-tab').style.display = '';
+    document.getElementById('mobile-admin-tab').style.display = '';
+  }
+  loadMarkets();
+  startBalancePolling();
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function showAuthError(msg) { document.getElementById('auth-error').textContent = msg; }
+
+// ===== SECTIONS =====
+function showSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`section-${name}`).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name==='markets')     loadMarkets();
+  if (name==='portfolio')   loadPortfolio();
+  if (name==='leaderboard') loadLeaderboard();
+  if (name==='admin')       loadAdminQuestions();
+  if (name==='complaints')   loadComplaints();
+}
+
+function setMobileTab(btn) {
+  document.querySelectorAll('.mobile-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== DEADLINE HELPERS =====
+function deadlineInfo(deadline) {
+  if (!deadline) return null;
+  const now=new Date(), end=new Date(deadline), diff=end-now;
+  if (diff<0) return {text:'נסגר להימורים',cls:'expired'};
+  const mins=Math.floor(diff/60000), hours=Math.floor(diff/3600000);
+  if (mins<60)  return {text:`נסגר בעוד ${mins} דקות`,cls:'soon'};
+  if (hours<24) return {text:`נסגר בעוד ${hours} שעות`,cls:'soon'};
+  return {text:`נסגר ב-${end.toLocaleDateString('he-IL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`,cls:''};
+}
+
+// ===== MARKETS =====
+async function loadMarkets() {
+  const res  = await fetch(`${API}/api/questions`,{headers:authHeaders()});
+  const data = await res.json();
+  renderMarkets(data.questions||[]);
+}
+
+function renderMarkets(questions) {
+  const grid = document.getElementById('markets-grid');
+  if (!questions.length) {
+    grid.innerHTML=`<div class="empty-state"><span class="emoji">🤔</span>אין שאלות עדיין</div>`;
+    return;
+  }
+  grid.innerHTML = questions.map(q=>{
+    const total=q.yes_volume+q.no_volume;
+    const yesPct=total>0?Math.round((q.yes_volume/total)*100):50;
+    const noPct=100-yesPct;
+    const dl=deadlineInfo(q.deadline);
+    const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}>
       ${deptTag}
