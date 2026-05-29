@@ -55,6 +55,7 @@ initDB().then(async () => {
   // migrations
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS yes_count INTEGER DEFAULT 0"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_count INTEGER DEFAULT 0"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS department TEXT DEFAULT ''"); } catch(e) {}
   console.log('DB ready');
 }).catch(console.error);
 
@@ -314,6 +315,7 @@ async function initSuggestions() {
       category    TEXT DEFAULT 'כללי',
       option_yes  TEXT DEFAULT 'כן',
       option_no   TEXT DEFAULT 'לא',
+      department  TEXT DEFAULT '',
       user_id     INTEGER,
       username    TEXT,
       approved    INTEGER DEFAULT 0,
@@ -329,9 +331,10 @@ app.post('/api/suggestions', auth, async (req, res) => {
     const { question, category, option_yes, option_no } = req.body;
     if (!question || question.trim().length < 5)
       return res.status(400).json({ error: 'שאלה קצרה מדי' });
+    const { department } = req.body;
     await pool.query(
-      'INSERT INTO suggestions (question, category, option_yes, option_no, user_id, username) VALUES ($1,$2,$3,$4,$5,$6)',
-      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', req.user.id, req.user.display_name]
+      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user.id, req.user.display_name]
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -352,8 +355,8 @@ app.post('/api/suggestions/:id/approve', adminAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'לא נמצאה' });
     const s = rows[0];
     await pool.query(
-      'INSERT INTO questions (question, category, option_yes, option_no, created_by) VALUES ($1,$2,$3,$4,$5)',
-      [s.question, s.category, s.option_yes, s.option_no, req.user.id]
+      'INSERT INTO questions (question, category, option_yes, option_no, department, created_by) VALUES ($1,$2,$3,$4,$5,$6)',
+      [s.question, s.category, s.option_yes, s.option_no, s.department||'', req.user.id]
     );
     await pool.query('UPDATE suggestions SET approved = 1 WHERE id = $1', [s.id]);
     res.json({ success: true });

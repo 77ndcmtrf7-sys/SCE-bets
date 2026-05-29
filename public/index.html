@@ -158,6 +158,20 @@
         <h3>שאלה חדשה</h3>
         <input type="text" id="new-question-text" placeholder="טקסט השאלה..." class="admin-input" />
         <input type="text" id="new-question-category" placeholder="קטגוריה (הרצאות, בחינות...)" class="admin-input" />
+        <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
+        <select id="new-question-dept" class="admin-input admin-select">
+          <option value="">כללי / לכולם</option>
+          <option value="מכונות">⚙️ מכונות</option>
+          <option value="בניין">🏗️ בניין</option>
+          <option value="חשמל">⚡ חשמל</option>
+          <option value="תוכנה">💻 תוכנה</option>
+          <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
+          <option value="כימית">🧪 כימית</option>
+          <option value="אדריכלות">📐 אדריכלות</option>
+          <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
+          <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
+          <option value="דימות רפואי">🩻 דימות רפואי</option>
+        </select>
         <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
         <input type="datetime-local" id="new-question-deadline" class="admin-input" />
         <label class="admin-date-label">אפשרויות בחירה</label>
@@ -198,6 +212,20 @@
     <div class="bet-controls">
       <input type="text" id="suggest-question" placeholder="מה השאלה? למשל: האם המרצה יגיע בזמן?" class="admin-input" />
       <input type="text" id="suggest-category" placeholder="קטגוריה (הרצאות, בחינות...)" class="admin-input" />
+      <label class="admin-date-label" style="padding-right:4px;">מחלקה <span class="optional-tag">אופציונלי</span></label>
+      <select id="suggest-dept" class="admin-input admin-select">
+        <option value="">כללי / לכולם</option>
+        <option value="מכונות">⚙️ מכונות</option>
+        <option value="בניין">🏗️ בניין</option>
+        <option value="חשמל">⚡ חשמל</option>
+        <option value="תוכנה">💻 תוכנה</option>
+        <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
+        <option value="כימית">🧪 כימית</option>
+        <option value="אדריכלות">📐 אדריכלות</option>
+        <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
+        <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
+        <option value="דימות רפואי">🩻 דימות רפואי</option>
+      </select>
       <div class="bet-amount-row">
         <label>אפשרות א</label>
         <input type="text" id="suggest-opt-yes" placeholder='כן' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />

@@ -154,6 +154,7 @@ function renderMarkets(questions) {
     const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}>
+      ${deptTag}
       <div class="card-category">${q.category||'כללי'}</div>
       <div class="card-question">${q.question}</div>
       ${dlHtml}
@@ -333,14 +334,16 @@ async function createQuestion() {
   const deadline=document.getElementById('new-question-deadline').value;
   const optYes=document.getElementById('new-option-yes').value.trim();
   const optNo =document.getElementById('new-option-no').value.trim();
+  const dept  =document.getElementById('new-question-dept').value;
   if(!text) return showToast('כתוב שאלה קודם','error');
-  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא'})});
+  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||''})});
   if(res.ok){
     document.getElementById('new-question-text').value='';
     document.getElementById('new-question-category').value='';
     document.getElementById('new-question-deadline').value='';
     document.getElementById('new-option-yes').value='';
     document.getElementById('new-option-no').value='';
+    document.getElementById('new-question-dept').value='';
     showToast('שאלה חדשה בשוק! 🔥','success'); loadAdminQuestions();
   } else { const d=await res.json(); showToast(d.error||'שגיאה','error'); }
 }
@@ -573,10 +576,11 @@ async function submitSuggestion() {
 
   if (!question) { errEl.textContent = 'כתוב שאלה קודם 🙄'; return; }
 
+  const department = document.getElementById('suggest-dept').value;
   const res = await fetch('/api/suggestions', {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא' })
+    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'' })
   });
 
   if (res.ok) {
