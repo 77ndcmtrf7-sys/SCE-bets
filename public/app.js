@@ -158,7 +158,6 @@ function renderMarkets(questions) {
       ${deptTag}
       <div class="card-category">${q.category||'כללי'}</div>
       <div class="card-question">${q.question}</div>
-      ${dlHtml}
       <div class="card-bar-wrap">
         <div class="card-bar"><div class="card-bar-fill" style="width:${yesPct}%"></div></div>
         <div class="card-bar-labels">
@@ -166,6 +165,7 @@ function renderMarkets(questions) {
           <span class="no-label">${noPct}% ${q.option_no||'לא'}</span>
         </div>
       </div>
+      ${dlHtml}
       <div class="card-footer">
         <div class="card-volume">
           נפח: <span>${formatNum(total)} נק"ז</span>
@@ -344,7 +344,6 @@ function renderMarkets(questions) {
       ${deptTag}
       <div class="card-category">${q.category||'כללי'}</div>
       <div class="card-question">${q.question}</div>
-      ${dlHtml}
       <div class="card-bar-wrap">
         <div class="card-bar"><div class="card-bar-fill" style="width:${yesPct}%"></div></div>
         <div class="card-bar-labels">
@@ -352,6 +351,7 @@ function renderMarkets(questions) {
           <span class="no-label">${noPct}% ${q.option_no||'לא'}</span>
         </div>
       </div>
+      ${dlHtml}
       <div class="card-footer">
         <div class="card-volume">
           נפח: <span>${formatNum(total)} נק"ז</span>
