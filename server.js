@@ -51,7 +51,12 @@ async function initDB() {
   `);
 }
 
-initDB().then(() => console.log('DB ready')).catch(console.error);
+initDB().then(async () => {
+  // migrations
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS yes_count INTEGER DEFAULT 0"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_count INTEGER DEFAULT 0"); } catch(e) {}
+  console.log('DB ready');
+}).catch(console.error);
 
 async function auth(req, res, next) {
   const header = req.headers.authorization;
@@ -159,8 +164,8 @@ app.post('/api/bet', auth, async (req, res) => {
 
     await client.query('BEGIN');
     await client.query('INSERT INTO bets (user_id, question_id, choice, amount) VALUES ($1,$2,$3,$4)', [req.user.id, question_id, choice, amount]);
-    if (choice === 'YES') await client.query('UPDATE questions SET yes_volume = yes_volume + $1 WHERE id = $2', [amount, question_id]);
-    else await client.query('UPDATE questions SET no_volume = no_volume + $1 WHERE id = $2', [amount, question_id]);
+    if (choice === 'YES') await client.query('UPDATE questions SET yes_volume = yes_volume + $1, yes_count = yes_count + 1 WHERE id = $2', [amount, question_id]);
+    else await client.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [amount, question_id]);
     await client.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [amount, req.user.id]);
     await client.query('COMMIT');
 

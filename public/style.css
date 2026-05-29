@@ -943,3 +943,9 @@ body::after {
     background: rgba(245,240,235,0.85);
   }
 }
+
+/* ===== BALANCE FLOAT ANIMATION ===== */
+@keyframes floatUp {
+  0%   { opacity: 1; transform: translateY(0) translateX(-50%); }
+  100% { opacity: 0; transform: translateY(-32px) translateX(-50%); }
+}

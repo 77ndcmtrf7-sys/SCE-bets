@@ -92,6 +92,7 @@ function loginSuccess(user) {
     document.getElementById('mobile-admin-tab').style.display = '';
   }
   loadMarkets();
+  startBalancePolling();
 }
 
 function logout() {
@@ -164,9 +165,16 @@ function renderMarkets(questions) {
         </div>
       </div>
       <div class="card-footer">
-        <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
+        <div class="card-volume">
+          נפח: <span>${formatNum(total)} נק"ז</span>
+          <span style="color:var(--text3);margin-right:8px;">·</span>
+          <span style="color:var(--yes)">${q.yes_count||0}</span>
+          <span style="color:var(--text3)"> vs </span>
+          <span style="color:var(--no)">${q.no_count||0}</span>
+          <span style="color:var(--text3);font-size:11px;"> משתתפים</span>
+        </div>
         ${q.resolved
-          ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ כן':'✗ לא'} — נסגר</div>`
+          ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
           :`<div class="bet-buttons">
               <button class="bet-btn yes" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">${q.option_yes||'כן'}</button>
               <button class="bet-btn no"  onclick="event.stopPropagation();openBetModal(${q.id},'NO')">${q.option_no||'לא'}</button>
@@ -308,7 +316,7 @@ function renderAdminQuestions(questions) {
     const dl=q.deadline?new Date(q.deadline).toLocaleString('he-IL'):null;
     return `<div class="admin-q-item">
       <div class="admin-q-text">${q.question}</div>
-      <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${dl?` · סגירה: ${dl}`:''}  · ${q.resolved?`נסגר — ${q.result}`:'פעיל'}</div>
+      <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${dl?` · סגירה: ${dl}`:''}  · ${q.resolved?`נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`:'פעיל'}</div>
       <div class="admin-q-actions">
         ${!q.resolved?`
           <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
@@ -347,6 +355,58 @@ async function deleteQuestion(id) {
   if(!confirm('למחוק שאלה זו?')) return;
   const res=await fetch(`${API}/api/questions/${id}`,{method:'DELETE',headers:authHeaders()});
   if(res.ok){showToast('נמחק','success');loadAdminQuestions();}
+}
+
+// ===== REAL-TIME BALANCE =====
+let balancePoller = null;
+
+function startBalancePolling() {
+  if (balancePoller) return;
+  balancePoller = setInterval(async () => {
+    const res = await fetch('/api/me', { headers: authHeaders() });
+    if (!res.ok) return;
+    const user = await res.json();
+    const newBalance = user.balance;
+    if (newBalance !== currentUser.balance) {
+      const diff = newBalance - currentUser.balance;
+      currentUser.balance = newBalance;
+      animateBalance(newBalance, diff);
+    }
+  }, 8000);
+}
+
+function animateBalance(newBalance, diff) {
+  const el = document.getElementById('nav-balance');
+  if (!el) return;
+
+  // Flash animation
+  el.style.transition = 'color 0.3s, transform 0.3s';
+  el.style.color = diff > 0 ? 'var(--yes)' : 'var(--no)';
+  el.style.transform = 'scale(1.2)';
+
+  // Show diff popup
+  if (diff !== 0) {
+    const popup = document.createElement('span');
+    popup.textContent = (diff > 0 ? '+' : '') + formatNum(Math.round(diff));
+    popup.style.cssText = `
+      position: absolute;
+      font-size: 12px;
+      font-weight: 700;
+      color: ${diff > 0 ? 'var(--yes)' : 'var(--no)'};
+      animation: floatUp 1.5s ease forwards;
+      pointer-events: none;
+      white-space: nowrap;
+    `;
+    el.parentElement.style.position = 'relative';
+    el.parentElement.appendChild(popup);
+    setTimeout(() => popup.remove(), 1500);
+  }
+
+  setTimeout(() => {
+    el.textContent = formatNum(newBalance);
+    el.style.color = '';
+    el.style.transform = '';
+  }, 600);
 }
 
 // ===== UTILS =====
