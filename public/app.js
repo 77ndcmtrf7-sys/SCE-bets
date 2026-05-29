@@ -150,7 +150,7 @@ function renderMarkets(questions) {
     const dl=deadlineInfo(q.deadline);
     const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}> 
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}>
       <div class="card-category">${q.category||'כללי'}</div>
       <div class="card-question">${q.question}</div>
       ${dlHtml}

@@ -27,8 +27,8 @@
   --text:      #1d1d1f;
   --text2:     #6e6e73;
   --text3:     #aeaeb2;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
-  --shadow:    0 4px 20px rgba(0,0,0,0.08);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow:    0 8px 28px rgba(0,0,0,0.1);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
   --nav-bg:    rgba(245,245,247,0.85);
 }
@@ -69,7 +69,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Heebo', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Heebo', -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.01em;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -611,3 +611,30 @@ body::before {
   gap: 8px;
 }
 .admin-opt-input { margin-bottom: 0 !important; }
+
+/* ===== CATEGORY COLORS ===== */
+.market-card[data-cat="הרצאות"]  { border-top: 3px solid #f0b429; }
+.market-card[data-cat="בחינות"]  { border-top: 3px solid #f05252; }
+.market-card[data-cat="קנטינה"]  { border-top: 3px solid #22d98a; }
+.market-card[data-cat="כללי"]    { border-top: 3px solid var(--accent); }
+.market-card                     { border-top: 3px solid var(--accent); }
+
+/* ===== CARD ENTRANCE ANIMATION ===== */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.market-card {
+  animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.market-card:nth-child(1)  { animation-delay: 0.05s; }
+.market-card:nth-child(2)  { animation-delay: 0.10s; }
+.market-card:nth-child(3)  { animation-delay: 0.15s; }
+.market-card:nth-child(4)  { animation-delay: 0.20s; }
+.market-card:nth-child(5)  { animation-delay: 0.25s; }
+.market-card:nth-child(6)  { animation-delay: 0.30s; }
+.market-card:nth-child(7)  { animation-delay: 0.35s; }
+.market-card:nth-child(8)  { animation-delay: 0.40s; }
+.market-card:nth-child(9)  { animation-delay: 0.45s; }
