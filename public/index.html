@@ -41,7 +41,7 @@
 <!-- APP -->
 <div id="app" style="display:none">
   <nav class="navbar">
-    <div class="nav-logo-wrap">
+    <div class="nav-logo-wrap" onclick="showSection('markets', document.querySelector('.nav-tab'))" style="cursor:pointer;">
       <div class="nav-logo">Bets</div>
       <div class="nav-sce-badge">SCE</div>
     </div>
@@ -58,7 +58,7 @@
         <span class="balance-label">נק"ז</span>
       </div>
       <div class="user-chip" id="nav-username">—</div>
-      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="עבור בין מצבי תצוגה"></button>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="עבור בין מצבי תצוגה">🌙</button>
       <button class="logout-btn" onclick="logout()">יציאה</button>
     </div>
   </nav>

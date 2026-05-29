@@ -29,6 +29,7 @@ function updateToggleBtn() {
   if (!btn) return;
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
     (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  btn.textContent = isDark ? '☀️' : '🌙';
   btn.title = isDark ? 'עבור למצב בהיר' : 'עבור למצב כהה';
   btn.parentElement.classList.toggle('dark-active', isDark);
 }
