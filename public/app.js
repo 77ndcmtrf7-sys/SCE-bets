@@ -386,8 +386,8 @@ function renderAdminUsers(users) {
 }
 
 async function deleteUser(id, name) {
-  if (!confirm(\`למחוק את המשתמש "\${name}"? פעולה זו אינה הפיכה.\`)) return;
-  const res = await fetch(\`/api/admin/users/\${id}\`, { method: 'DELETE', headers: authHeaders() });
+  if (!confirm('למחוק את המשתמש "' + name + '"? פעולה זו אינה הפיכה.')) return;
+  const res = await fetch('/api/admin/users/' + id, { method: 'DELETE', headers: authHeaders() });
   if (res.ok) { showToast('משתמש נמחק', 'success'); loadAdminUsers(); }
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }
