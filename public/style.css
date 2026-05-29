@@ -949,3 +949,32 @@ body::after {
   0%   { opacity: 1; transform: translateY(0) translateX(-50%); }
   100% { opacity: 0; transform: translateY(-32px) translateX(-50%); }
 }
+
+/* ===== SUGGEST BUTTON ===== */
+.suggest-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+  padding-bottom: 20px;
+}
+
+.suggest-pill-btn {
+  background: linear-gradient(135deg, #ff6eb4, #ff9f0a);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 13px 32px;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(255,110,180,0.35);
+  transition: all 0.2s;
+}
+
+.suggest-pill-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(255,110,180,0.5);
+}
+
+.suggest-pill-btn:active { transform: scale(0.98); }

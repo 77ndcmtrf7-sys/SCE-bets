@@ -304,4 +304,68 @@ app.post('/api/complaints', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// --- Suggestions table ---
+async function initSuggestions() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS suggestions (
+      id          SERIAL PRIMARY KEY,
+      question    TEXT NOT NULL,
+      category    TEXT DEFAULT 'כללי',
+      option_yes  TEXT DEFAULT 'כן',
+      option_no   TEXT DEFAULT 'לא',
+      user_id     INTEGER,
+      username    TEXT,
+      approved    INTEGER DEFAULT 0,
+      created_at  TEXT DEFAULT (to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))
+    )
+  `);
+}
+initSuggestions().catch(console.error);
+
+// Submit suggestion
+app.post('/api/suggestions', auth, async (req, res) => {
+  try {
+    const { question, category, option_yes, option_no } = req.body;
+    if (!question || question.trim().length < 5)
+      return res.status(400).json({ error: 'שאלה קצרה מדי' });
+    await pool.query(
+      'INSERT INTO suggestions (question, category, option_yes, option_no, user_id, username) VALUES ($1,$2,$3,$4,$5,$6)',
+      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', req.user.id, req.user.display_name]
+    );
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Get suggestions (admin)
+app.get('/api/suggestions', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM suggestions WHERE approved = 0 ORDER BY created_at DESC');
+    res.json({ suggestions: rows });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Approve suggestion (admin) - creates a question
+app.post('/api/suggestions/:id/approve', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM suggestions WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'לא נמצאה' });
+    const s = rows[0];
+    await pool.query(
+      'INSERT INTO questions (question, category, option_yes, option_no, created_by) VALUES ($1,$2,$3,$4,$5)',
+      [s.question, s.category, s.option_yes, s.option_no, req.user.id]
+    );
+    await pool.query('UPDATE suggestions SET approved = 1 WHERE id = $1', [s.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete suggestion (admin)
+app.delete('/api/suggestions/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM suggestions WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`🎓 SCE Bets רץ על http://localhost:${PORT}`));

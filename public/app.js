@@ -422,9 +422,11 @@ function showToast(msg,type='success'){
 function switchAdminTab(tab, btn) {
   document.querySelectorAll('.admin-inner-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('admin-tab-questions').style.display = tab==='questions' ? 'block' : 'none';
-  document.getElementById('admin-tab-users').style.display     = tab==='users'     ? 'block' : 'none';
-  if (tab==='users') loadAdminUsers();
+  document.getElementById('admin-tab-questions').style.display   = tab==='questions'   ? 'block' : 'none';
+  document.getElementById('admin-tab-users').style.display       = tab==='users'       ? 'block' : 'none';
+  document.getElementById('admin-tab-suggestions').style.display = tab==='suggestions' ? 'block' : 'none';
+  if (tab==='users')       loadAdminUsers();
+  if (tab==='suggestions') loadAdminSuggestions();
 }
 
 // ===== ADMIN USERS =====
@@ -544,4 +546,94 @@ async function submitComplaint() {
     const d = await res.json();
     errEl.textContent = d.error || 'שגיאה';
   }
+}
+
+// ===== SUGGEST MODAL =====
+function openSuggestModal() {
+  document.getElementById('suggest-question').value = '';
+  document.getElementById('suggest-category').value = '';
+  document.getElementById('suggest-opt-yes').value = '';
+  document.getElementById('suggest-opt-no').value = '';
+  document.getElementById('suggest-error').textContent = '';
+  document.getElementById('suggest-modal').classList.add('open');
+}
+
+function closeSuggestModal(e) {
+  if (e && e.target !== document.getElementById('suggest-modal')) return;
+  document.getElementById('suggest-modal').classList.remove('open');
+}
+
+async function submitSuggestion() {
+  const question   = document.getElementById('suggest-question').value.trim();
+  const category   = document.getElementById('suggest-category').value.trim();
+  const option_yes = document.getElementById('suggest-opt-yes').value.trim();
+  const option_no  = document.getElementById('suggest-opt-no').value.trim();
+  const errEl      = document.getElementById('suggest-error');
+  errEl.textContent = '';
+
+  if (!question) { errEl.textContent = 'כתוב שאלה קודם 🙄'; return; }
+
+  const res = await fetch('/api/suggestions', {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא' })
+  });
+
+  if (res.ok) {
+    document.getElementById('suggest-modal').classList.remove('open');
+    showToast('ההצעה נשלחה למנהל 🚀', 'success');
+  } else {
+    const d = await res.json();
+    errEl.textContent = d.error || 'שגיאה';
+  }
+}
+
+// ===== ADMIN SUGGESTIONS =====
+async function loadAdminSuggestions() {
+  const res  = await fetch('/api/suggestions', { headers: authHeaders() });
+  const data = await res.json();
+  renderAdminSuggestions(data.suggestions || []);
+
+  // Update badge
+  const badge = document.getElementById('suggestions-badge');
+  if (badge) {
+    if (data.suggestions && data.suggestions.length > 0) {
+      badge.textContent = data.suggestions.length;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function renderAdminSuggestions(suggestions) {
+  const list = document.getElementById('admin-suggestions-list');
+  if (!suggestions.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;">אין הצעות חדשות</div>';
+    return;
+  }
+  list.innerHTML = suggestions.map(s => `
+    <div class="admin-q-item">
+      <div class="admin-q-text">${s.question}</div>
+      <div class="admin-q-meta">
+        מאת: ${s.username||'אנונימי'} · קטגוריה: ${s.category}
+        · אפשרויות: ${s.option_yes} / ${s.option_no}
+      </div>
+      <div class="admin-q-actions">
+        <button class="admin-q-btn resolve-yes" onclick="approveSuggestion(${s.id})">✓ אשר וצור סקר</button>
+        <button class="admin-q-btn delete" onclick="deleteSuggestion(${s.id})">✗ דחה</button>
+      </div>
+    </div>`
+  ).join('');
+}
+
+async function approveSuggestion(id) {
+  const res = await fetch('/api/suggestions/' + id + '/approve', { method: 'POST', headers: authHeaders() });
+  if (res.ok) { showToast('סקר נוצר מההצעה 🎉', 'success'); loadAdminSuggestions(); loadAdminQuestions(); }
+  else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
+}
+
+async function deleteSuggestion(id) {
+  const res = await fetch('/api/suggestions/' + id, { method: 'DELETE', headers: authHeaders() });
+  if (res.ok) { showToast('הצעה נדחתה', 'success'); loadAdminSuggestions(); }
 }

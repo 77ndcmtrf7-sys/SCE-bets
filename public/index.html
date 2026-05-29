@@ -84,10 +84,13 @@
 
   <section id="section-markets" class="section active">
     <div class="section-header">
-      <h1>שאלות פתוחות</h1>
+      <h1>סקרים פתוחים</h1>
       <p class="section-sub">תחזיות, ניחושים, ואולי קצת מזל 🎯</p>
     </div>
     <div id="markets-grid" class="markets-grid"></div>
+    <div class="suggest-btn-wrap">
+      <button class="suggest-pill-btn" onclick="openSuggestModal()">+ הצע סקר</button>
+    </div>
   </section>
 
   <section id="section-portfolio" class="section">
@@ -148,6 +151,7 @@
     <div class="admin-inner-tabs">
         <button class="admin-inner-tab active" onclick="switchAdminTab('questions', this)">שאלות</button>
         <button class="admin-inner-tab" onclick="switchAdminTab('users', this)">משתמשים</button>
+        <button class="admin-inner-tab" onclick="switchAdminTab('suggestions', this)">הצעות <span id="suggestions-badge" style="display:none;background:#ff6eb4;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-right:4px;"></span></button>
       </div>
     <div id="admin-tab-questions" class="admin-panel">
       <div class="admin-card">
@@ -168,6 +172,12 @@
         <div id="admin-questions-list"></div>
       </div>
     </div>
+    <div id="admin-tab-suggestions" style="display:none">
+      <div class="admin-card">
+        <h3>הצעות ממשתמשים</h3>
+        <div id="admin-suggestions-list"></div>
+      </div>
+    </div>
     <div id="admin-tab-users" style="display:none">
       <div class="admin-card">
         <h3>ניהול משתמשים</h3>
@@ -175,6 +185,31 @@
       </div>
     </div>
   </section>
+</div>
+
+
+<!-- SUGGEST MODAL -->
+<div id="suggest-modal" class="modal-overlay" onclick="closeSuggestModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSuggestModal()">✕</button>
+    <div class="modal-category">הצע סקר חדש</div>
+    <h2>יש לך רעיון? 💡</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:18px;padding-right:8px;">ההצעה תישלח למנהל לאישור</p>
+    <div class="bet-controls">
+      <input type="text" id="suggest-question" placeholder="מה השאלה? למשל: האם המרצה יגיע בזמן?" class="admin-input" />
+      <input type="text" id="suggest-category" placeholder="קטגוריה (הרצאות, בחינות...)" class="admin-input" />
+      <div class="bet-amount-row">
+        <label>אפשרות א</label>
+        <input type="text" id="suggest-opt-yes" placeholder='כן' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
+      </div>
+      <div class="bet-amount-row">
+        <label>אפשרות ב</label>
+        <input type="text" id="suggest-opt-no" placeholder='לא' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
+      </div>
+      <button class="place-bet-btn" onclick="submitSuggestion()">שלח הצעה 🚀</button>
+    </div>
+    <div id="suggest-error" class="modal-error"></div>
+  </div>
 </div>
 
 <!-- BET MODAL -->
