@@ -85,8 +85,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0;
-  transition: opacity 0.3s;
+  opacity: 1;
   background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,110,180,0.12) 0%, transparent 70%),
               radial-gradient(ellipse 60% 40% at 20% 0%, rgba(255,100,0,0.07) 0%, transparent 60%);
 }
