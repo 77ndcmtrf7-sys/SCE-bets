@@ -263,4 +263,40 @@ app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
   finally { client.release(); }
 });
 
+
+// --- Complaints table ---
+async function initComplaints() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS complaints (
+      id          SERIAL PRIMARY KEY,
+      content     TEXT NOT NULL,
+      rating      INTEGER DEFAULT 0,
+      author_name TEXT NOT NULL,
+      user_id     INTEGER,
+      created_at  TEXT DEFAULT (to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))
+    )
+  `);
+}
+initComplaints().catch(console.error);
+
+app.get('/api/complaints', auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM complaints ORDER BY created_at DESC LIMIT 100');
+    res.json({ complaints: rows });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/complaints', auth, async (req, res) => {
+  try {
+    const { content, rating, author_name } = req.body;
+    if (!content || content.trim().length < 5)
+      return res.status(400).json({ error: 'תלונה קצרה מדי' });
+    await pool.query(
+      'INSERT INTO complaints (content, rating, author_name, user_id) VALUES ($1,$2,$3,$4)',
+      [content.trim(), rating || 0, author_name || 'אנונימי', req.user.id]
+    );
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`🎓 SCE Bets רץ על http://localhost:${PORT}`));

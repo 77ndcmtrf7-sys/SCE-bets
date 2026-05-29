@@ -112,6 +112,7 @@ function showSection(name, btn) {
   if (name==='portfolio')   loadPortfolio();
   if (name==='leaderboard') loadLeaderboard();
   if (name==='admin')       loadAdminQuestions();
+  if (name==='complaints')   loadComplaints();
 }
 
 function setMobileTab(btn) {
@@ -390,4 +391,96 @@ async function deleteUser(id, name) {
   const res = await fetch('/api/admin/users/' + id, { method: 'DELETE', headers: authHeaders() });
   if (res.ok) { showToast('משתמש נמחק', 'success'); loadAdminUsers(); }
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
+}
+
+// ===== COMPLAINTS =====
+const FAKE_NAMES = [
+  'סטודנט שנה ג' נשבר', 'בוגר PTSD', 'ישבתי בשורה הראשונה',
+  'מי שהשאיל עט ולא החזיר', 'הצל של המרצה', 'סטודנט שבור ורוח',
+  'ד"ר לא זוכר את שמי', 'יצאתי מהקורס חזק יותר (שקר)',
+  'בוגר טראומטי', 'מי שמצלם את הלוח', 'שרדתי את הסמסטר',
+  'אנונימי אבל ברור מי זה', 'הכסא האחורי', 'מי שהגיע ב-8 בבוקר',
+  'גאוס מקבר שלי', 'המחשבון לא עזר', 'הגשתי יומיים לפני',
+  'קפה מהמכונה הרג אותי', 'WiFi בן 404', 'נכשלתי רק כי'
+];
+
+let selectedStars = 0;
+
+function initStars() {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach(s => {
+    s.addEventListener('mouseover', () => highlightStars(+s.dataset.val));
+    s.addEventListener('mouseout',  () => highlightStars(selectedStars));
+    s.addEventListener('click',     () => {
+      selectedStars = +s.dataset.val;
+      highlightStars(selectedStars);
+      document.getElementById('star-count').textContent = selectedStars + ' / 10';
+    });
+  });
+}
+
+function highlightStars(n) {
+  document.querySelectorAll('.star').forEach(s => {
+    s.classList.toggle('active', +s.dataset.val <= n);
+  });
+}
+
+async function loadComplaints() {
+  initStars();
+  const res  = await fetch('/api/complaints', { headers: authHeaders() });
+  const data = await res.json();
+  renderComplaints(data.complaints || []);
+}
+
+function renderComplaints(complaints) {
+  const list = document.getElementById('complaints-list');
+  if (!complaints.length) {
+    list.innerHTML = '<div class="complaints-empty">אין תלונות עדיין — אתם מרוצים מדי 🤔</div>';
+    return;
+  }
+  list.innerHTML = complaints.map(c => {
+    const stars = c.rating > 0
+      ? '★'.repeat(c.rating) + '☆'.repeat(10 - c.rating)
+      : '☆☆☆☆☆☆☆☆☆☆';
+    const lowClass = c.rating <= 3 ? 'low' : '';
+    const date = new Date(c.created_at).toLocaleDateString('he-IL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    return `
+    <div class="complaint-item">
+      <div class="complaint-item-header">
+        <div class="complaint-author">${c.author_name}</div>
+        <div class="complaint-stars ${lowClass}">${stars} ${c.rating}/10</div>
+      </div>
+      <div class="complaint-text-content">${c.content}</div>
+      <div class="complaint-date">${date}</div>
+    </div>`;
+  }).join('');
+}
+
+async function submitComplaint() {
+  const text = document.getElementById('complaint-text').value.trim();
+  const errEl = document.getElementById('complaint-error');
+  errEl.textContent = '';
+
+  if (!text) { errEl.textContent = 'כתוב משהו קודם 🙄'; return; }
+  if (text.length < 5) { errEl.textContent = 'תתאמץ קצת יותר'; return; }
+
+  const authorName = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
+
+  const res = await fetch('/api/complaints', {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content: text, rating: selectedStars, author_name: authorName })
+  });
+
+  if (res.ok) {
+    document.getElementById('complaint-text').value = '';
+    selectedStars = 0;
+    highlightStars(0);
+    document.getElementById('star-count').textContent = '0 / 10';
+    showToast('התלונה נשמעה (אולי) 📮', 'success');
+    loadComplaints();
+  } else {
+    const d = await res.json();
+    errEl.textContent = d.error || 'שגיאה';
+  }
 }

@@ -73,6 +73,9 @@
     <button class="mobile-tab" onclick="showSection('leaderboard',this);setMobileTab(this)">
       <span class="mtab-icon">🏆</span>טבלה
     </button>
+    <button class="mobile-tab" onclick="showSection('complaints',this);setMobileTab(this)">
+      <span class="mtab-icon">📮</span>תלונות
+    </button>
     <button class="mobile-tab" id="mobile-admin-tab" onclick="showSection('admin',this);setMobileTab(this)" style="display:none">
       <span class="mtab-icon">⚙️</span>ניהול
     </button>
@@ -100,6 +103,40 @@
       <p class="section-sub">מי שולט בנק"ז של המכללה?</p>
     </div>
     <div id="leaderboard-list" class="leaderboard-list"></div>
+  </section>
+
+  <section id="section-complaints" class="section">
+    <div class="section-header">
+      <h1>תיבת תלונות 📮</h1>
+      <p class="section-sub">כי מישהו צריך לשמוע אותך</p>
+    </div>
+    <div class="complaints-layout">
+      <div class="complaint-form-card">
+        <h3>הוסף תלונה</h3>
+        <div class="star-rating-wrap">
+          <label class="complaint-label">דירוג (אם 0 זה האמת)</label>
+          <div class="star-row" id="star-row">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+            <span class="star" data-val="6">★</span>
+            <span class="star" data-val="7">★</span>
+            <span class="star" data-val="8">★</span>
+            <span class="star" data-val="9">★</span>
+            <span class="star" data-val="10">★</span>
+          </div>
+          <span class="star-count" id="star-count">0 / 10</span>
+        </div>
+        <textarea id="complaint-text" class="complaint-textarea" placeholder="מה על הלב? המרצה, האוכל, ה-WiFi, הכל..."></textarea>
+        <button class="complaint-submit-btn" onclick="submitComplaint()">שלח תלונה</button>
+        <div id="complaint-error" class="complaint-error"></div>
+      </div>
+      <div class="complaints-list-wrap">
+        <div id="complaints-list"></div>
+      </div>
+    </div>
   </section>
 
   <section id="section-admin" class="section">
