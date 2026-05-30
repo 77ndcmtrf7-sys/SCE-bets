@@ -706,25 +706,39 @@ async function submitSuggestion() {
   }
 }
 
+// ===== SUGGESTIONS BADGE =====
+async function loadSuggestionsBadge() {
+  if (!currentUser || !currentUser.is_admin) return;
+  try {
+    const res  = await fetch('/api/suggestions', { headers: authHeaders() });
+    const data = await res.json();
+    const badge = document.getElementById('suggestions-badge');
+    if (!badge) return;
+    const count = (data.suggestions || []).length;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+
 // ===== ADMIN SUGGESTIONS =====
 async function loadAdminSuggestions() {
   const res  = await fetch('/api/suggestions', { headers: authHeaders() });
   const data = await res.json();
   renderAdminSuggestions(data.suggestions || []);
 
-  // Update badge
-  const badge = document.getElementById('suggestions-badge');
-  if (badge) {
-    if (data.suggestions && data.suggestions.length > 0) {
-      badge.textContent = data.suggestions.length;
-      badge.style.display = 'inline';
-    } else {
-      badge.style.display = 'none';
-    }
-  }
+  // badge is handled in renderAdminSuggestions
 }
 
 function renderAdminSuggestions(suggestions) {
+  const badge = document.getElementById('suggestions-badge');
+  if (badge) {
+    if (suggestions.length > 0) { badge.textContent = suggestions.length; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+  }
   const list = document.getElementById('admin-suggestions-list');
   if (!suggestions.length) {
     list.innerHTML = '<div style="color:var(--text3);font-size:13px;">אין הצעות חדשות</div>';
