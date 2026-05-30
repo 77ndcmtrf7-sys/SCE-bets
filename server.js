@@ -464,21 +464,4 @@ app.post('/api/me/update', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-
-// Update profile
-app.post('/api/me/update', auth, async (req, res) => {
-  try {
-    const { display_name, password } = req.body;
-    if (!display_name) return res.status(400).json({ error: 'שם תצוגה לא יכול להיות ריק' });
-
-    if (password && password.length >= 4) {
-      const hash = await bcrypt.hash(password, 10);
-      await pool.query('UPDATE users SET display_name=$1, password=$2 WHERE id=$3', [display_name, hash, req.user.id]);
-    } else {
-      await pool.query('UPDATE users SET display_name=$1 WHERE id=$2', [display_name, req.user.id]);
-    }
-    res.json({ success: true });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
 app.listen(PORT, () => console.log(`🎓 SCE Bets רץ על http://localhost:${PORT}`));

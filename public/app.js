@@ -142,7 +142,10 @@ function loginSuccess(user) {
   }
   loadMarkets();
   startBalancePolling();
-  if (user.is_admin) setInterval(loadSuggestionsBadge, 30000);
+  if (user.is_admin) {
+    loadSuggestionsBadge();
+    setInterval(loadSuggestionsBadge, 30000);
+  }
 }
 
 function logout() {
@@ -803,65 +806,6 @@ async function deleteComplaint(id) {
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }
 
-// ===== TOGGLE PASSWORD =====
-function togglePassword(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁';
-  }
-}
-
-// ===== PROFILE MODAL =====
-function openProfileModal() {
-  if (!currentUser) return;
-  document.getElementById('profile-username-title').textContent = currentUser.username;
-  document.getElementById('profile-display').value = currentUser.display_name;
-  document.getElementById('profile-password').value = '';
-  document.getElementById('profile-error').textContent = '';
-  document.getElementById('profile-modal').classList.add('open');
-}
-
-function closeProfileModal(e) {
-  if (e && e.target !== document.getElementById('profile-modal')) return;
-  document.getElementById('profile-modal').classList.remove('open');
-}
-
-async function saveProfile() {
-  const display_name = document.getElementById('profile-display').value.trim();
-  const password     = document.getElementById('profile-password').value;
-  const errEl        = document.getElementById('profile-error');
-  errEl.textContent  = '';
-
-  if (!display_name) { errEl.textContent = 'שם תצוגה לא יכול להיות ריק'; return; }
-
-  const body = { display_name };
-  if (password) {
-    if (password.length < 4) { errEl.textContent = 'סיסמה חייבת להיות לפחות 4 תווים'; return; }
-    body.password = password;
-  }
-
-  const res = await fetch('/api/me/update', {
-    method: 'POST',
-    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  if (res.ok) {
-    const data = await res.json();
-    currentUser.display_name = data.display_name;
-    document.getElementById('nav-username').textContent = data.display_name;
-    document.getElementById('profile-modal').classList.remove('open');
-    showToast('פרופיל עודכן 👌', 'success');
-  } else {
-    const d = await res.json();
-    errEl.textContent = d.error || 'שגיאה';
-  }
-}
-
 // ===== PROFILE MODAL =====
 function openProfileModal() {
   if (!currentUser) return;
@@ -884,9 +828,10 @@ async function saveProfile() {
   errEl.textContent = '';
 
   if (!displayName) { errEl.textContent = 'שם תצוגה לא יכול להיות ריק'; return; }
+  if (password && password.length < 4) { errEl.textContent = 'סיסמה חייבת להיות לפחות 4 תווים'; return; }
 
   const body = { display_name: displayName };
-  if (password && password.length > 0) body.password = password;
+  if (password) body.password = password;
 
   const res = await fetch('/api/me/update', {
     method: 'POST',
@@ -897,9 +842,9 @@ async function saveProfile() {
   const data = await res.json();
   if (!res.ok) { errEl.textContent = data.error || 'שגיאה'; return; }
 
-  currentUser.display_name = displayName;
+  currentUser.display_name = data.display_name;
   const navUser = document.getElementById('nav-username');
-  if (navUser) navUser.textContent = displayName;
+  if (navUser) navUser.textContent = data.display_name;
   document.getElementById('profile-modal').classList.remove('open');
   showToast('הפרופיל עודכן ✓', 'success');
 }
