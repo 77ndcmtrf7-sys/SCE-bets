@@ -41,12 +41,49 @@ window.onload = () => {
   initTheme();
   const token = localStorage.getItem('token');
   if (token) tryAutoLogin();
+  else {
+    // Guest mode - show app directly
+    loadMarkets();
+    updateGuestUI();
+  }
 };
 
 async function tryAutoLogin() {
   const res = await fetch(`${API}/api/me`, { headers: authHeaders() });
   if (res.ok) { const d = await res.json(); loginSuccess(d); }
   else localStorage.removeItem('token');
+}
+
+// ===== GUEST MODE =====
+function updateGuestUI(loggedIn = false) {
+  const logoutBtn  = document.getElementById('logout-btn');
+  const authNavBtn = document.getElementById('auth-nav-btn');
+  const adminTab   = document.getElementById('admin-tab');
+  const mobileAdmin = document.getElementById('mobile-admin-tab');
+  const navBalance = document.querySelector('.balance-chip');
+  const navUsername = document.getElementById('nav-username');
+
+  if (loggedIn) {
+    if (logoutBtn)  logoutBtn.style.display  = '';
+    if (authNavBtn) authNavBtn.style.display = 'none';
+    if (navBalance) navBalance.style.display = '';
+    if (navUsername) navUsername.style.display = '';
+  } else {
+    if (logoutBtn)  logoutBtn.style.display  = 'none';
+    if (authNavBtn) authNavBtn.style.display = '';
+    if (navBalance) navBalance.style.display = 'none';
+    if (navUsername) navUsername.style.display = 'none';
+    if (adminTab)   adminTab.style.display   = 'none';
+    if (mobileAdmin) mobileAdmin.style.display = 'none';
+  }
+}
+
+function showAuthOverlay() {
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function hideAuthOverlay() {
+  document.getElementById('auth-overlay').style.display = 'none';
 }
 
 // ===== AUTH =====
@@ -83,10 +120,10 @@ async function register() {
 
 function loginSuccess(user) {
   currentUser = user;
-  document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  hideAuthOverlay();
   document.getElementById('nav-username').textContent = user.display_name;
   document.getElementById('nav-balance').textContent  = formatNum(user.balance);
+  updateGuestUI(true);
   if (user.is_admin) {
     document.getElementById('admin-tab').style.display = '';
     document.getElementById('mobile-admin-tab').style.display = '';
@@ -98,8 +135,9 @@ function loginSuccess(user) {
 function logout() {
   localStorage.removeItem('token');
   currentUser = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-overlay').style.display = 'flex';
+  updateGuestUI(false);
+  loadMarkets();
+  showSection('markets', document.querySelector('.nav-tab'));
 }
 
 function showAuthError(msg) { document.getElementById('auth-error').textContent = msg; }
@@ -646,4 +684,27 @@ async function approveSuggestion(id) {
 async function deleteSuggestion(id) {
   const res = await fetch('/api/suggestions/' + id, { method: 'DELETE', headers: authHeaders() });
   if (res.ok) { showToast('הצעה נדחתה', 'success'); loadAdminSuggestions(); }
+}
+
+// ===== GUEST VOTE =====
+async function guestVote(questionId, choice, btn) {
+  const res = await fetch('/api/guest-vote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question_id: questionId, choice })
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    loadMarkets();
+    // Show prompt to register
+    const toast = document.getElementById('toast');
+    toast.innerHTML = 'הצבעת! <button onclick="showAuthOverlay()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:20px;padding:2px 10px;margin-right:8px;cursor:pointer;font-family:Rubik,sans-serif;font-size:12px;">הרשם כדי להמר 🚀</button>';
+    toast.className = 'toast success show';
+    setTimeout(() => { toast.className = 'toast'; toast.textContent=''; }, 5000);
+  } else if (data.error === 'already_voted') {
+    showToast('כבר הצבעת על הסקר הזה', 'error');
+  } else {
+    showToast(data.error || 'שגיאה', 'error');
+  }
 }

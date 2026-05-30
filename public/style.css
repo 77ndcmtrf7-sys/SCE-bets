@@ -1206,3 +1206,27 @@ body::after {
 }
 .card-deadline.soon { color: var(--gold); }
 .card-deadline.expired { color: var(--no); }
+
+/* ===== AUTH NAV BUTTON ===== */
+.auth-nav-btn {
+  background: linear-gradient(135deg, #ff6eb4, #ff9f0a);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.auth-nav-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,110,180,0.4); }
+
+/* Guest vote buttons - slightly different style */
+.guest-vote {
+  opacity: 0.85;
+}
+.guest-vote:hover {
+  opacity: 1;
+}

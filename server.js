@@ -120,9 +120,9 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/me', auth, (req, res) => res.json(userSafe(req.user)));
 
-app.get('/api/questions', auth, async (req, res) => {
+app.get('/api/questions', async (req, res) => {
   try {
-    const showAll = req.query.all && req.user.is_admin;
+    const showAll = req.query.all && req.user?.is_admin;
     const sql = showAll
       ? 'SELECT * FROM questions ORDER BY created_at DESC'
       : 'SELECT * FROM questions ORDER BY resolved ASC, created_at DESC';
@@ -370,6 +370,65 @@ app.delete('/api/suggestions/:id', adminAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM suggestions WHERE id = $1', [req.params.id]);
     res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// --- Guest votes ---
+async function initGuestVotes() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS guest_votes (
+      id          SERIAL PRIMARY KEY,
+      question_id INTEGER NOT NULL,
+      ip_address  TEXT NOT NULL,
+      choice      TEXT NOT NULL,
+      created_at  TEXT DEFAULT (to_char(now(), 'YYYY-MM-DD HH24:MI:SS')),
+      UNIQUE(question_id, ip_address)
+    )
+  `);
+}
+initGuestVotes().catch(console.error);
+
+app.post('/api/guest-vote', async (req, res) => {
+  try {
+    const { question_id, choice } = req.body;
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+
+    if (!['YES','NO'].includes(choice))
+      return res.status(400).json({ error: 'בחירה לא תקינה' });
+
+    const q = await pool.query('SELECT * FROM questions WHERE id = $1', [question_id]);
+    if (!q.rows[0]) return res.status(404).json({ error: 'סקר לא נמצא' });
+    if (q.rows[0].resolved) return res.status(400).json({ error: 'הסקר נסגר' });
+
+    // Check already voted
+    const existing = await pool.query(
+      'SELECT id FROM guest_votes WHERE question_id = $1 AND ip_address = $2',
+      [question_id, ip]
+    );
+    if (existing.rows[0]) return res.status(400).json({ error: 'already_voted' });
+
+    // Insert vote and update volumes (50 nkz weight)
+    const GUEST_WEIGHT = 50;
+    await pool.query(
+      'INSERT INTO guest_votes (question_id, ip_address, choice) VALUES ($1,$2,$3)',
+      [question_id, ip, choice]
+    );
+    if (choice === 'YES') {
+      await pool.query('UPDATE questions SET yes_volume = yes_volume + $1, yes_count = yes_count + 1 WHERE id = $2', [GUEST_WEIGHT, question_id]);
+    } else {
+      await pool.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [GUEST_WEIGHT, question_id]);
+    }
+
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Allow unauthenticated access to questions list and complaints
+app.get('/api/questions/public', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM questions ORDER BY resolved ASC, created_at DESC');
+    res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
