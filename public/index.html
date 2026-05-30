@@ -90,6 +90,13 @@
   </div>
 
   <section id="section-markets" class="section active">
+    <div id="guest-banner" class="guest-banner" style="display:none">
+      <span>👀 אתה גולש כאורח — הצבעה אחת לכל סקר, כל הצבעה שווה 50 נק"ז וירטואלי</span>
+      <div class="guest-banner-actions">
+        <button onclick="showAuthOverlay()" class="guest-banner-btn">הרשם להמרה אמיתית 🚀</button>
+        <button onclick="dismissGuestBanner()" class="guest-banner-close">✕</button>
+      </div>
+    </div>
     <div class="section-header">
       <h1>סקרים פתוחים</h1>
       <p class="section-sub">תחזיות, ניחושים, ואולי קצת מזל 🎯</p>
@@ -158,6 +165,7 @@
     <div class="admin-inner-tabs">
         <button class="admin-inner-tab active" onclick="switchAdminTab('questions', this)">שאלות</button>
         <button class="admin-inner-tab" onclick="switchAdminTab('users', this)">משתמשים</button>
+        <button class="admin-inner-tab" onclick="switchAdminTab('activity', this)">פעילות</button>
         <button class="admin-inner-tab" onclick="switchAdminTab('suggestions', this)">הצעות <span id="suggestions-badge" style="display:none;background:#ff6eb4;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-right:4px;"></span></button>
       </div>
     <div id="admin-tab-questions" class="admin-panel">
@@ -206,6 +214,12 @@
       <div class="admin-card">
         <h3>ניהול משתמשים</h3>
         <div id="admin-users-list"></div>
+      </div>
+    </div>
+    <div id="admin-tab-activity" style="display:none">
+      <div class="admin-card">
+        <h3>לוג פעילות אחרונה</h3>
+        <div id="admin-activity-list"></div>
       </div>
     </div>
   </section>

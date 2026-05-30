@@ -1284,3 +1284,90 @@ body::after {
   transition: opacity 0.2s;
 }
 .pw-toggle:hover { opacity: 1; }
+
+/* ===== GUEST BANNER ===== */
+.guest-banner {
+  background: linear-gradient(135deg, rgba(255,110,180,0.12), rgba(255,159,10,0.10));
+  border: 1px solid rgba(255,110,180,0.25);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+  flex-wrap: wrap;
+}
+
+.guest-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.guest-banner-btn {
+  background: linear-gradient(135deg, #ff6eb4, #ff9f0a);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.guest-banner-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,110,180,0.35); }
+
+.guest-banner-close {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.guest-banner-close:hover { color: var(--text); }
+
+@media (max-width: 600px) {
+  .guest-banner { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+
+/* ===== ACTIVITY LOG ===== */
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.activity-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.activity-msg {
+  flex: 1;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.activity-time {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

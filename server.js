@@ -59,6 +59,25 @@ initDB().then(async () => {
   console.log('DB ready');
 }).catch(console.error);
 
+// --- Activity log ---
+async function initActivityLog() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS activity_log (
+      id         SERIAL PRIMARY KEY,
+      type       TEXT NOT NULL,
+      message    TEXT NOT NULL,
+      created_at TEXT DEFAULT (to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))
+    )
+  `);
+}
+initActivityLog().catch(console.error);
+
+async function logActivity(type, message) {
+  try {
+    await pool.query('INSERT INTO activity_log (type, message) VALUES ($1, $2)', [type, message]);
+  } catch(e) { console.error('logActivity error:', e.message); }
+}
+
 async function auth(req, res, next) {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ error: 'לא מחובר' });
@@ -103,6 +122,7 @@ app.post('/api/register', async (req, res) => {
       'INSERT INTO users (username, display_name, password, is_admin) VALUES ($1,$2,$3,$4) RETURNING *',
       [username, display_name, hash, isAdmin]
     );
+    logActivity('register', `משתמש חדש נרשם: ${display_name}`);
     res.json({ token: makeToken(r.rows[0]), user: userSafe(r.rows[0]) });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -147,6 +167,7 @@ app.post('/api/questions', adminAuth, async (req, res) => {
       'INSERT INTO questions (question, category, deadline, option_yes, option_no, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
       [question, category || 'כללי', deadline || null, option_yes || 'כן', option_no || 'לא', req.user.id]
     );
+    logActivity('question', `סקר חדש פורסם: "${question}"`);
     res.json({ id: r.rows[0].id });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -171,6 +192,7 @@ app.post('/api/bet', auth, async (req, res) => {
     await client.query('COMMIT');
 
     const { rows: uRows } = await client.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
+    logActivity('bet', `${req.user.display_name} הימר ${amount} נק"ז על "${qRows[0].question}"`);
     res.json({ success: true, new_balance: uRows[0].balance });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
@@ -203,6 +225,7 @@ app.post('/api/questions/:id/resolve', adminAuth, async (req, res) => {
       await client.query('UPDATE bets SET won = 0, payout = 0 WHERE id = $1', [bet.id]);
     }
     await client.query('COMMIT');
+    logActivity('resolve', `סקר נסגר — "${qRows[0].question}" — ${result === 'YES' ? (qRows[0].option_yes||'כן') : (qRows[0].option_no||'לא')} ניצח`);
     res.json({ success: true });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
@@ -423,6 +446,7 @@ app.post('/api/guest-vote', async (req, res) => {
       await pool.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [GUEST_WEIGHT, question_id]);
     }
 
+    logActivity('guest_vote', `אורח הצביע על "${q.rows[0].question}"`);
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -461,6 +485,14 @@ app.post('/api/me/update', auth, async (req, res) => {
 
     const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [req.user.id]);
     res.json({ display_name: rows[0].display_name });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Activity log endpoint ---
+app.get('/api/admin/activity', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 100');
+    res.json({ activity: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

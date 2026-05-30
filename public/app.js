@@ -88,6 +88,11 @@ function updateGuestUI(loggedIn = false) {
     if (navUsername) navUsername.style.display = 'none';
     if (adminTab)   adminTab.style.display   = 'none';
     if (mobileAdmin) mobileAdmin.style.display = 'none';
+    // הצג באנר אורח אם לא נסגר בעבר
+    if (!sessionStorage.getItem('guest-banner-dismissed')) {
+      const banner = document.getElementById('guest-banner');
+      if (banner) banner.style.display = '';
+    }
   }
 }
 
@@ -133,6 +138,8 @@ async function register() {
 function loginSuccess(user) {
   currentUser = user;
   hideAuthOverlay();
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = 'none';
   document.getElementById('nav-username').textContent = user.display_name;
   document.getElementById('nav-balance').textContent  = formatNum(user.balance);
   updateGuestUI(true);
@@ -532,15 +539,24 @@ function showToast(msg,type='success'){
   setTimeout(()=>{t.className='toast';},3000);
 }
 
+// ===== GUEST BANNER =====
+function dismissGuestBanner() {
+  sessionStorage.setItem('guest-banner-dismissed', '1');
+  const banner = document.getElementById('guest-banner');
+  if (banner) banner.style.display = 'none';
+}
+
 // ===== ADMIN TABS =====
 function switchAdminTab(tab, btn) {
   document.querySelectorAll('.admin-inner-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('admin-tab-questions').style.display   = tab==='questions'   ? 'block' : 'none';
-  document.getElementById('admin-tab-users').style.display       = tab==='users'       ? 'block' : 'none';
+  document.getElementById('admin-tab-questions').style.display = tab==='questions' ? 'block' : 'none';
+  document.getElementById('admin-tab-users').style.display     = tab==='users'     ? 'block' : 'none';
   document.getElementById('admin-tab-suggestions').style.display = tab==='suggestions' ? 'block' : 'none';
+  document.getElementById('admin-tab-activity').style.display  = tab==='activity'  ? 'block' : 'none';
   if (tab==='users')       loadAdminUsers();
   if (tab==='suggestions') loadAdminSuggestions();
+  if (tab==='activity')    loadAdminActivity();
 }
 
 // ===== ADMIN USERS =====
@@ -790,6 +806,38 @@ async function approveSuggestion(id) {
 async function deleteSuggestion(id) {
   const res = await fetch('/api/suggestions/' + id, { method: 'DELETE', headers: authHeaders() });
   if (res.ok) { showToast('ההצעה נדחתה לפח ההיסטוריה 🗑️', 'success'); loadAdminSuggestions(); }
+}
+
+// ===== ADMIN ACTIVITY LOG =====
+async function loadAdminActivity() {
+  const res  = await fetch('/api/admin/activity', { headers: authHeaders() });
+  const data = await res.json();
+  renderAdminActivity(data.activity || []);
+}
+
+function renderAdminActivity(items) {
+  const list = document.getElementById('admin-activity-list');
+  if (!items.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;">אין פעילות עדיין</div>';
+    return;
+  }
+  const icons = { bet: '🎯', register: '👤', resolve: '🏁', guest_vote: '👀', question: '📊' };
+  list.innerHTML = items.map(item => {
+    const ago = timeAgo(item.created_at);
+    return `<div class="activity-item">
+      <span class="activity-icon">${icons[item.type] || '•'}</span>
+      <span class="activity-msg">${item.message}</span>
+      <span class="activity-time">${ago}</span>
+    </div>`;
+  }).join('');
+}
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60)   return `לפני ${diff} שניות`;
+  if (diff < 3600) return `לפני ${Math.floor(diff/60)} דקות`;
+  if (diff < 86400) return `לפני ${Math.floor(diff/3600)} שעות`;
+  return `לפני ${Math.floor(diff/86400)} ימים`;
 }
 
 // ===== GUEST VOTE =====
