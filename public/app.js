@@ -192,7 +192,7 @@ function renderMarkets(questions) {
     const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
     const deptTag=q.department?`<div class="dept-tag">${q.department}</div>`:'';
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${!q.resolved?`onclick="openBetModal(${q.id})"`:''}> 
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${!q.resolved?(currentUser?`onclick="openBetModal(${q.id})"`:'onclick=""'):''}> 
       ${deptTag}
       <div class="card-category">${q.category||'כללי'}</div>
       <div class="card-question">${q.question}</div>
@@ -208,10 +208,15 @@ function renderMarkets(questions) {
         <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
         ${q.resolved
           ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
-          :`<div class="bet-buttons">
-              <button class="bet-btn yes" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">${q.option_yes||'כן'}</button>
-              <button class="bet-btn no"  onclick="event.stopPropagation();openBetModal(${q.id},'NO')">${q.option_no||'לא'}</button>
-            </div>`
+          :currentUser
+            ?`<div class="bet-buttons">
+                <button class="bet-btn yes" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">${q.option_yes||'כן'}</button>
+                <button class="bet-btn no"  onclick="event.stopPropagation();openBetModal(${q.id},'NO')">${q.option_no||'לא'}</button>
+              </div>`
+            :`<div class="bet-buttons">
+                <button class="bet-btn yes" onclick="event.stopPropagation();guestVote(${q.id},'YES',this)">${q.option_yes||'כן'}</button>
+                <button class="bet-btn no"  onclick="event.stopPropagation();guestVote(${q.id},'NO',this)">${q.option_no||'לא'}</button>
+              </div>`
         }
       </div>
       <div class="card-stats-row" dir="ltr">
@@ -227,6 +232,7 @@ function renderMarkets(questions) {
 
 // ===== BET MODAL =====
 async function openBetModal(questionId,choice='YES') {
+  if (!currentUser) { showAuthOverlay(); return; }
   const res  = await fetch(`${API}/api/questions/${questionId}`,{headers:authHeaders()});
   const data = await res.json();
   if (!res.ok) return;
