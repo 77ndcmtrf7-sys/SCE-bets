@@ -54,6 +54,19 @@ async function tryAutoLogin() {
   else localStorage.removeItem('token');
 }
 
+// ===== PASSWORD TOGGLE =====
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
 // ===== GUEST MODE =====
 function updateGuestUI(loggedIn = false) {
   const logoutBtn  = document.getElementById('logout-btn');
@@ -107,11 +120,10 @@ async function login() {
 }
 
 async function register() {
-  const username    = document.getElementById('reg-username').value.trim();
-  const displayName = document.getElementById('reg-display').value.trim();
-  const password    = document.getElementById('reg-password').value;
-  if (!username||!displayName||!password) return showAuthError('נא למלא את כל השדות');
-  const res = await fetch(`${API}/api/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,display_name:displayName,password})});
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!username||!password) return showAuthError('נא למלא את כל השדות');
+  const res = await fetch(`${API}/api/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,display_name:username,password})});
   const data = await res.json();
   if (!res.ok) return showAuthError(data.error||'שגיאה בהרשמה');
   localStorage.setItem('token',data.token);
@@ -379,7 +391,7 @@ function renderAdminQuestions(questions) {
   }).join('');
 }
 
-async function createQuestion() {
+async function createQuestion(asDraft = false) {
   const text=document.getElementById('new-question-text').value.trim();
   const category=document.getElementById('new-question-category').value.trim();
   const deadline=document.getElementById('new-question-deadline').value;
@@ -387,6 +399,24 @@ async function createQuestion() {
   const optNo =document.getElementById('new-option-no').value.trim();
   const dept  =document.getElementById('new-question-dept').value;
   if(!text) return showToast('כתוב שאלה קודם','error');
+  if (asDraft) {
+    // Save as suggestion (draft)
+    const suggestHeaders = { 'Content-Type': 'application/json', ...authHeaders() };
+    const res2 = await fetch('/api/suggestions', { method:'POST', headers: suggestHeaders,
+      body: JSON.stringify({ question:text, category:category||'כללי', option_yes:optYes||'כן', option_no:optNo||'לא', department:dept||'', is_draft:true })
+    });
+    if (res2.ok) {
+      document.getElementById('new-question-text').value='';
+      document.getElementById('new-question-category').value='';
+      document.getElementById('new-question-deadline').value='';
+      document.getElementById('new-option-yes').value='';
+      document.getElementById('new-option-no').value='';
+      document.getElementById('new-question-dept').value='';
+      showToast('נשמר כטיוטה 📝','success');
+      loadAdminSuggestions();
+    }
+    return;
+  }
   const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||''})});
   if(res.ok){
     document.getElementById('new-question-text').value='';
@@ -678,6 +708,7 @@ function renderAdminSuggestions(suggestions) {
     <div class="admin-q-item">
       <div class="admin-q-text">${s.question}</div>
       <div class="admin-q-meta">
+        ${s.is_draft?'<span style="background:rgba(245,158,11,0.15);color:#f59e0b;border-radius:20px;padding:1px 8px;font-size:11px;margin-left:6px;">טיוטה</span>':''}
         מאת: ${s.username||'אנונימי'} · קטגוריה: ${s.category}
         · אפשרויות: ${s.option_yes} / ${s.option_no}
       </div>
@@ -729,4 +760,101 @@ async function deleteComplaint(id) {
   const res = await fetch('/api/complaints/' + id, { method: 'DELETE', headers: authHeaders() });
   if (res.ok) { showToast('נמחק', 'success'); loadComplaints(); }
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
+}
+
+// ===== TOGGLE PASSWORD =====
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+// ===== PROFILE MODAL =====
+function openProfileModal() {
+  if (!currentUser) return;
+  document.getElementById('profile-username-title').textContent = currentUser.username;
+  document.getElementById('profile-display').value = currentUser.display_name;
+  document.getElementById('profile-password').value = '';
+  document.getElementById('profile-error').textContent = '';
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfileModal(e) {
+  if (e && e.target !== document.getElementById('profile-modal')) return;
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+async function saveProfile() {
+  const display_name = document.getElementById('profile-display').value.trim();
+  const password     = document.getElementById('profile-password').value;
+  const errEl        = document.getElementById('profile-error');
+  errEl.textContent  = '';
+
+  if (!display_name) { errEl.textContent = 'שם תצוגה לא יכול להיות ריק'; return; }
+
+  const body = { display_name };
+  if (password) {
+    if (password.length < 4) { errEl.textContent = 'סיסמה חייבת להיות לפחות 4 תווים'; return; }
+    body.password = password;
+  }
+
+  const res = await fetch('/api/me/update', {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    currentUser.display_name = data.display_name;
+    document.getElementById('nav-username').textContent = data.display_name;
+    document.getElementById('profile-modal').classList.remove('open');
+    showToast('פרופיל עודכן 👌', 'success');
+  } else {
+    const d = await res.json();
+    errEl.textContent = d.error || 'שגיאה';
+  }
+}
+
+// ===== PROFILE MODAL =====
+function openProfileModal() {
+  if (!currentUser) return;
+  document.getElementById('profile-username-display').textContent = currentUser.display_name;
+  document.getElementById('profile-display-name').value = currentUser.display_name;
+  document.getElementById('profile-password').value = '';
+  document.getElementById('profile-error').textContent = '';
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfileModal(e) {
+  if (e && e.target !== document.getElementById('profile-modal')) return;
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+async function saveProfile() {
+  const displayName = document.getElementById('profile-display-name').value.trim();
+  const password    = document.getElementById('profile-password').value;
+  const errEl = document.getElementById('profile-error');
+  errEl.textContent = '';
+
+  if (!displayName) { errEl.textContent = 'שם תצוגה לא יכול להיות ריק'; return; }
+
+  const res = await fetch('/api/me/update', {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ display_name: displayName, password: password || null })
+  });
+
+  const data = await res.json();
+  if (!res.ok) { errEl.textContent = data.error || 'שגיאה'; return; }
+
+  currentUser.display_name = displayName;
+  document.getElementById('nav-username').textContent = displayName;
+  document.getElementById('profile-modal').classList.remove('open');
+  showToast('הפרופיל עודכן ✓', 'success');
 }

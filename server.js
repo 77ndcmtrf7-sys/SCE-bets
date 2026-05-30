@@ -319,12 +319,14 @@ async function initSuggestions() {
       user_id     INTEGER,
       username    TEXT,
       approved    INTEGER DEFAULT 0,
+      is_draft    INTEGER DEFAULT 0,
       created_at  TEXT DEFAULT (to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))
     )
   `);
 }
 initSuggestions().then(async () => {
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS department TEXT DEFAULT ''"); } catch(e) {}
+  try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS is_draft INTEGER DEFAULT 0"); } catch(e) {}
 }).catch(console.error);
 
 // Submit suggestion
@@ -334,9 +336,10 @@ app.post('/api/suggestions', async (req, res) => {
     if (!question || question.trim().length < 5)
       return res.status(400).json({ error: 'שאלה קצרה מדי' });
     const { department } = req.body;
+    const { is_draft } = req.body;
     await pool.query(
-      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח']
+      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username, is_draft) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח', is_draft?1:0]
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -437,6 +440,43 @@ app.get('/api/questions/public', async (req, res) => {
 app.delete('/api/complaints/:id', adminAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM complaints WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Update profile
+app.post('/api/me/update', auth, async (req, res) => {
+  try {
+    const { display_name, password } = req.body;
+    if (!display_name) return res.status(400).json({ error: 'שם תצוגה לא יכול להיות ריק' });
+
+    if (password) {
+      if (password.length < 4) return res.status(400).json({ error: 'סיסמה חייבת להיות לפחות 4 תווים' });
+      const hash = await bcrypt.hash(password, 10);
+      await pool.query('UPDATE users SET display_name=$1, password=$2 WHERE id=$3', [display_name, hash, req.user.id]);
+    } else {
+      await pool.query('UPDATE users SET display_name=$1 WHERE id=$2', [display_name, req.user.id]);
+    }
+
+    const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [req.user.id]);
+    res.json({ display_name: rows[0].display_name });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// Update profile
+app.post('/api/me/update', auth, async (req, res) => {
+  try {
+    const { display_name, password } = req.body;
+    if (!display_name) return res.status(400).json({ error: 'שם תצוגה לא יכול להיות ריק' });
+
+    if (password && password.length >= 4) {
+      const hash = await bcrypt.hash(password, 10);
+      await pool.query('UPDATE users SET display_name=$1, password=$2 WHERE id=$3', [display_name, hash, req.user.id]);
+    } else {
+      await pool.query('UPDATE users SET display_name=$1 WHERE id=$2', [display_name, req.user.id]);
+    }
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });

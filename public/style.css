@@ -1230,3 +1230,57 @@ body::after {
 .guest-vote:hover {
   opacity: 1;
 }
+
+/* ===== PASSWORD WRAP ===== */
+.password-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.password-wrap .auth-input,
+.password-wrap .admin-input {
+  width: 100%;
+  padding-left: 44px !important;
+}
+
+.eye-btn {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.eye-btn:hover { opacity: 1; }
+
+/* ===== PASSWORD WRAP ===== */
+.password-wrap {
+  position: relative;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+.password-wrap .auth-input,
+.password-wrap input {
+  padding-left: 40px !important;
+}
+.pw-toggle {
+  position: absolute;
+  left: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.pw-toggle:hover { opacity: 1; }
