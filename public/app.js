@@ -60,7 +60,7 @@ function updateGuestUI(loggedIn = false) {
   const authNavBtn = document.getElementById('auth-nav-btn');
   const adminTab   = document.getElementById('admin-tab');
   const mobileAdmin = document.getElementById('mobile-admin-tab');
-  const navBalance = document.querySelector('.balance-chip');
+  const navBalance = document.getElementById('nav-balance-chip');
   const navUsername = document.getElementById('nav-username');
 
   if (loggedIn) {
@@ -325,8 +325,9 @@ function renderPortfolio(bets) {
 
 // ===== LEADERBOARD =====
 async function loadLeaderboard() {
-  const res=await fetch(`${API}/api/leaderboard`,{headers:authHeaders()});
-  const data=await res.json();
+  const headers = localStorage.getItem('token') ? authHeaders() : {};
+  const res = await fetch(`${API}/api/leaderboard`, { headers });
+  const data = await res.json();
   renderLeaderboard(data.users||[]);
 }
 
@@ -341,7 +342,7 @@ function renderLeaderboard(users) {
         i===2 ? '<span style="font-size:22px;filter:sepia(0.8) saturate(1.5);">🥉</span>' :
         (i+1)
       }</div>
-      <div class="lb-name">${u.display_name}${u.id===currentUser.id?'<span class="lb-you">(אתה)</span>':''}${i===0?'<span style="font-size:11px;background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid rgba(255,215,0,0.3);border-radius:20px;padding:2px 8px;margin-right:6px;">מצטיין דיקן</span>':''}</div>
+      <div class="lb-name">${u.display_name}${currentUser && u.id===currentUser.id?'<span class="lb-you">(אתה)</span>':''}${i===0?'<span style="font-size:11px;background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid rgba(255,215,0,0.3);border-radius:20px;padding:2px 8px;margin-right:6px;">מצטיין דיקן</span>':''}</div>
       <div class="lb-balance">${formatNum(u.balance)}<span class="lb-balance-unit">נק"ז</span></div>
     </div>`).join('');
 }
@@ -576,9 +577,11 @@ async function submitComplaint() {
 
   const authorName = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
 
+  const headers = { 'Content-Type': 'application/json' };
+  if (localStorage.getItem('token')) Object.assign(headers, authHeaders());
   const res = await fetch('/api/complaints', {
     method: 'POST',
-    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ content: text, rating: selectedStars, author_name: authorName })
   });
 
@@ -621,9 +624,11 @@ async function submitSuggestion() {
   if (!question) { errEl.textContent = 'כתוב שאלה קודם 🙄'; return; }
 
   const department = document.getElementById('suggest-dept').value;
+  const sugHeaders = { 'Content-Type': 'application/json' };
+  if (localStorage.getItem('token')) Object.assign(sugHeaders, authHeaders());
   const res = await fetch('/api/suggestions', {
     method: 'POST',
-    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    headers: sugHeaders,
     body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'' })
   });
 

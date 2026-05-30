@@ -237,7 +237,7 @@ app.get('/api/my-bets', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/leaderboard', auth, async (req, res) => {
+app.get('/api/leaderboard', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT id, display_name, balance FROM users ORDER BY balance DESC LIMIT 20');
     res.json({ users: rows });
@@ -285,21 +285,21 @@ async function initComplaints() {
 }
 initComplaints().catch(console.error);
 
-app.get('/api/complaints', auth, async (req, res) => {
+app.get('/api/complaints', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM complaints ORDER BY created_at DESC LIMIT 100');
     res.json({ complaints: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/complaints', auth, async (req, res) => {
+app.post('/api/complaints', async (req, res) => {
   try {
     const { content, rating, author_name } = req.body;
     if (!content || content.trim().length < 5)
       return res.status(400).json({ error: 'תלונה קצרה מדי' });
     await pool.query(
       'INSERT INTO complaints (content, rating, author_name, user_id) VALUES ($1,$2,$3,$4)',
-      [content.trim(), rating || 0, author_name || 'אנונימי', req.user.id]
+      [content.trim(), rating || 0, author_name || 'אנונימי', req.user?.id||null]
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -328,7 +328,7 @@ initSuggestions().then(async () => {
 }).catch(console.error);
 
 // Submit suggestion
-app.post('/api/suggestions', auth, async (req, res) => {
+app.post('/api/suggestions', async (req, res) => {
   try {
     const { question, category, option_yes, option_no } = req.body;
     if (!question || question.trim().length < 5)
@@ -336,7 +336,7 @@ app.post('/api/suggestions', auth, async (req, res) => {
     const { department } = req.body;
     await pool.query(
       'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user.id, req.user.display_name]
+      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח']
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
