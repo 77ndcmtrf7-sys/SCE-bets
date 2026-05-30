@@ -142,6 +142,7 @@ function loginSuccess(user) {
   }
   loadMarkets();
   startBalancePolling();
+  if (user.is_admin) setInterval(loadSuggestionsBadge, 30000);
 }
 
 function logout() {
@@ -884,17 +885,21 @@ async function saveProfile() {
 
   if (!displayName) { errEl.textContent = 'שם תצוגה לא יכול להיות ריק'; return; }
 
+  const body = { display_name: displayName };
+  if (password && password.length > 0) body.password = password;
+
   const res = await fetch('/api/me/update', {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ display_name: displayName, password: password || null })
+    body: JSON.stringify(body)
   });
 
   const data = await res.json();
   if (!res.ok) { errEl.textContent = data.error || 'שגיאה'; return; }
 
   currentUser.display_name = displayName;
-  document.getElementById('nav-username').textContent = displayName;
+  const navUser = document.getElementById('nav-username');
+  if (navUser) navUser.textContent = displayName;
   document.getElementById('profile-modal').classList.remove('open');
   showToast('הפרופיל עודכן ✓', 'success');
 }
