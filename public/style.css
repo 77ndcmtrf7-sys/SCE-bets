@@ -705,7 +705,7 @@ body::after {
 /* ===== CATEGORY COLORS ===== */
 .market-card[data-cat="הרצאות"]  { border-top: 3px solid #f0b429; }
 .market-card[data-cat="בחינות"]  { border-top: 3px solid #f05252; }
-.market-card[data-cat="קנטינה"]  { border-top: 3px solid #22d98a; }
+.market-card[data-cat="קפיטריה"]  { border-top: 3px solid #22d98a; }
 .market-card[data-cat="כללי"]    { border-top: 3px solid var(--accent); }
 .market-card                     { border-top: 3px solid var(--accent); }
 

@@ -376,6 +376,29 @@ function renderLeaderboard(users) {
     </div>`).join('');
 }
 
+// ===== CATEGORY HELPERS =====
+function toggleCustomCategory(customInputId, select) {
+  const customInput = document.getElementById(customInputId);
+  if (!customInput) return;
+  if (select.value === '__custom__') {
+    customInput.style.display = '';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+function getCategory(selectId, customInputId) {
+  const select = document.getElementById(selectId);
+  if (!select) return 'כללי';
+  if (select.value === '__custom__') {
+    const custom = document.getElementById(customInputId)?.value.trim();
+    return custom || 'כללי';
+  }
+  return select.value || 'כללי';
+}
+
 // ===== ADMIN =====
 async function loadAdminQuestions() {
   const res=await fetch(`${API}/api/questions?all=1`,{headers:authHeaders()});
@@ -404,7 +427,7 @@ function renderAdminQuestions(questions) {
 
 async function createQuestion(asDraft = false) {
   const text=document.getElementById('new-question-text').value.trim();
-  const category=document.getElementById('new-question-category').value.trim();
+  const category=getCategory('new-question-category','new-question-category-custom');
   const deadline=document.getElementById('new-question-deadline').value;
   const optYes=document.getElementById('new-option-yes').value.trim();
   const optNo =document.getElementById('new-option-no').value.trim();
@@ -418,7 +441,9 @@ async function createQuestion(asDraft = false) {
     });
     if (res2.ok) {
       document.getElementById('new-question-text').value='';
-      document.getElementById('new-question-category').value='';
+      document.getElementById('new-question-category').value='כללי';
+    document.getElementById('new-question-category-custom').value='';
+    document.getElementById('new-question-category-custom').style.display='none';
       document.getElementById('new-question-deadline').value='';
       document.getElementById('new-option-yes').value='';
       document.getElementById('new-option-no').value='';
@@ -431,7 +456,9 @@ async function createQuestion(asDraft = false) {
   const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||''})});
   if(res.ok){
     document.getElementById('new-question-text').value='';
-    document.getElementById('new-question-category').value='';
+    document.getElementById('new-question-category').value='כללי';
+    document.getElementById('new-question-category-custom').value='';
+    document.getElementById('new-question-category-custom').style.display='none';
     document.getElementById('new-question-deadline').value='';
     document.getElementById('new-option-yes').value='';
     document.getElementById('new-option-no').value='';
@@ -717,7 +744,7 @@ function closeSuggestModal(e) {
 
 async function submitSuggestion() {
   const question   = document.getElementById('suggest-question').value.trim();
-  const category   = document.getElementById('suggest-category').value.trim();
+  const category   = getCategory('suggest-category','suggest-category-custom');
   const option_yes = document.getElementById('suggest-opt-yes').value.trim();
   const option_no  = document.getElementById('suggest-opt-no').value.trim();
   const errEl      = document.getElementById('suggest-error');

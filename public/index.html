@@ -173,7 +173,14 @@
       <div class="admin-card">
         <h3>שאלה חדשה</h3>
         <input type="text" id="new-question-text" placeholder="טקסט השאלה..." class="admin-input" />
-        <input type="text" id="new-question-category" placeholder="קטגוריה (הרצאות, בחינות...)" class="admin-input" />
+        <select id="new-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('new-question-category-custom', this)">
+          <option value="כללי">כללי</option>
+          <option value="הרצאות">הרצאות</option>
+          <option value="בחינות">בחינות</option>
+          <option value="קפיטריה">קפיטריה</option>
+          <option value="__custom__">אחר — כתוב בעצמך...</option>
+        </select>
+        <input type="text" id="new-question-category-custom" placeholder="קטגוריה מותאמת אישית" class="admin-input" style="display:none;margin-top:-4px;" />
         <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
         <select id="new-question-dept" class="admin-input admin-select">
           <option value="">כללי / לכולם</option>
@@ -236,7 +243,14 @@
     <p style="font-size:13px;color:var(--text2);margin-bottom:18px;padding-right:8px;">ההצעה תישלח למנהל לאישור</p>
     <div class="bet-controls">
       <input type="text" id="suggest-question" placeholder="מה השאלה? למשל: האם המרצה יגיע בזמן?" class="admin-input" />
-      <input type="text" id="suggest-category" placeholder="קטגוריה (הרצאות, בחינות...)" class="admin-input" />
+      <select id="suggest-category" class="admin-input admin-select" onchange="toggleCustomCategory('suggest-category-custom', this)">
+        <option value="כללי">כללי</option>
+        <option value="הרצאות">הרצאות</option>
+        <option value="בחינות">בחינות</option>
+        <option value="קפיטריה">קפיטריה</option>
+        <option value="__custom__">אחר — כתוב בעצמך...</option>
+      </select>
+      <input type="text" id="suggest-category-custom" placeholder="קטגוריה מותאמת אישית" class="admin-input" style="display:none;margin-top:-4px;" />
       <label class="admin-date-label" style="padding-right:4px;">מחלקה <span class="optional-tag">אופציונלי</span></label>
       <select id="suggest-dept" class="admin-input admin-select">
         <option value="">כללי / לכולם</option>
