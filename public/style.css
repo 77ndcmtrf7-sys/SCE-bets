@@ -1371,3 +1371,23 @@ body::after {
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ===== AUTH CLOSE BUTTON ===== */
+.auth-close-btn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: var(--bg3);
+  border: none;
+  color: var(--text2);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-close-btn:hover { background: var(--no-bg); color: var(--no); }
