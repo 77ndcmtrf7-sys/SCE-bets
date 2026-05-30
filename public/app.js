@@ -493,6 +493,32 @@ function animateBalance(newBalance, diff) {
   }, 600);
 }
 
+// ===== SOFT REFRESH =====
+function softRefresh() {
+  // If already on markets - just reload the data
+  const marketsSection = document.getElementById('section-markets');
+  if (marketsSection && marketsSection.classList.contains('active')) {
+    // Animate the grid out then back in
+    const grid = document.getElementById('markets-grid');
+    if (grid) {
+      grid.style.opacity = '0';
+      grid.style.transform = 'translateY(8px)';
+      grid.style.transition = 'opacity 0.2s, transform 0.2s';
+      setTimeout(() => {
+        loadMarkets().then(() => {
+          grid.style.opacity = '1';
+          grid.style.transform = 'translateY(0)';
+        });
+      }, 200);
+    }
+  } else {
+    // Navigate to markets
+    const marketsTab = document.querySelector('.nav-tab');
+    showSection('markets', marketsTab);
+    loadMarkets();
+  }
+}
+
 // ===== UTILS =====
 function authHeaders(){ return {Authorization:`Bearer ${localStorage.getItem('token')}`}; }
 function formatNum(n){ return Number(n).toLocaleString('he-IL'); }
