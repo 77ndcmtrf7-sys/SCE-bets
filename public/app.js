@@ -315,7 +315,7 @@ async function placeBet() {
   currentUser.balance=data.new_balance;
   document.getElementById('nav-balance').textContent=formatNum(currentUser.balance);
   document.getElementById('bet-modal').classList.remove('open');
-  showToast(`הימור של ${formatNum(amount)} נק"ז הונח בהצלחה`,'success');
+  showToast(`${formatNum(amount)} נק"ז על השולחן. אין דרך חזרה 🎯`, 'success');
   loadMarkets();
 }
 
@@ -416,7 +416,7 @@ async function createQuestion(asDraft = false) {
       document.getElementById('new-option-yes').value='';
       document.getElementById('new-option-no').value='';
       document.getElementById('new-question-dept').value='';
-      showToast('נשמר כטיוטה 📝','success');
+      showToast('נשמר כטיוטה — יום אחד אולי יצא לאור 📝','success');
       loadAdminSuggestions();
     }
     return;
@@ -429,13 +429,13 @@ async function createQuestion(asDraft = false) {
     document.getElementById('new-option-yes').value='';
     document.getElementById('new-option-no').value='';
     document.getElementById('new-question-dept').value='';
-    showToast('שאלה חדשה בשוק! 🔥','success'); loadAdminQuestions();
+    showToast('הסקר בשוק! מי אמיץ? 🔥','success'); loadAdminQuestions();
   } else { const d=await res.json(); showToast(d.error||'שגיאה','error'); }
 }
 
 async function resolveQuestion(id,result) {
   const res=await fetch(`${API}/api/questions/${id}/resolve`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({result})});
-  if(res.ok){showToast(`שאלה נסגרה — ${result==='YES'?'כן':'לא'} ניצח`,'success');loadAdminQuestions();}
+  if(res.ok){showToast(`נסגר. מי שניחש נכון — מזל. מי שלא — בניית אופי 💪`,'success');loadAdminQuestions();}
   else{const d=await res.json();showToast(d.error||'שגיאה','error');}
 }
 
@@ -566,19 +566,36 @@ function renderAdminUsers(users) {
 async function deleteUser(id, name) {
   if (!confirm('למחוק את המשתמש "' + name + '"? פעולה זו אינה הפיכה.')) return;
   const res = await fetch('/api/admin/users/' + id, { method: 'DELETE', headers: authHeaders() });
-  if (res.ok) { showToast('ביי ביי 👋','success'); loadAdminUsers(); }
+  if (res.ok) { showToast('המשתמש יצא מהבניין 👋', 'success'); loadAdminUsers(); }
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }
 
 // ===== COMPLAINTS =====
 const FAKE_NAMES = [
-  "סטודנט שנה ג' נשבר", "בוגר PTSD", "ישבתי בשורה הראשונה",
-  "מי שהשאיל עט ולא החזיר", "הצל של המרצה", "סטודנט שבור ורוח",
-  'ד"ר לא זוכר את שמי', "יצאתי מהקורס חזק יותר (שקר)",
-  "בוגר טראומטי", "מי שמצלם את הלוח", "שרדתי את הסמסטר",
-  "אנונימי אבל ברור מי זה", "הכסא האחורי", "מי שהגיע ב-8 בבוקר",
-  "גאוס מקבר שלי", "המחשבון לא עזר", "הגשתי יומיים לפני",
-  "קפה מהמכונה הרג אותי", "WiFi בן 404", "נכשלתי רק כי"
+  "הגשתי ב-23:58 ונשרפתי",
+  "ישבתי בשורה הראשונה כדי שיזכור אותי",
+  "שאלתי שאלה והרצה אמר שאלה מצוינת ולא ענה",
+  "התעוררתי להרצאה של 8 ולא הבנתי למה",
+  "יצאתי מהבחינה בטוח שעברתי",
+  "סיימתי את הגיליון ב-5 דקות וחיכיתי שעה",
+  "רשמתי הכל ולא הבנתי כלום",
+  "הגשתי יומיים לפני",
+  "המחשבון לא עזר",
+  "ישנתי בהרצאה אבל הצלמתי את הלוח",
+  "חיכיתי לסיכום בוואטסאפ שלא הגיע",
+  "ביקשתי הארכה ואמרו לא",
+  "קראתי את השאלה עשר פעמים ועדיין לא הבנתי",
+  "הייתי בטוח שזה לא בחומר",
+  "אנונימי אבל כולם יודעים מי זה",
+  "הגעתי בדיוק כשסגרו את הדלת",
+  "עשיתי את הכל נכון לפי התשובות שלאחר הבחינה",
+  "לא ישנתי לפני הבחינה ובכל זאת לא עזר",
+  "התקנתי את הסביבה שלוש שעות לפני ההגשה",
+  "מי שהשאיל עט ולא החזיר",
+  "קיבלתי 55 וחיוך מהמרצה",
+  "שרדתי את הסמסטר (בדיוק)",
+  "הבנתי את החומר רק אחרי הבחינה",
+  "ביקשתי ביטול עונשין ואמרו שזה לא קיים פה"
 ];
 
 let selectedStars = 0;
@@ -703,7 +720,7 @@ async function submitSuggestion() {
 
   if (res.ok) {
     document.getElementById('suggest-modal').classList.remove('open');
-    showToast('ההצעה נשלחה למנהל 🚀', 'success');
+    showToast('ההצעה בדרך. המנהל יחליט את גורלה ⚖️', 'success');
   } else {
     const d = await res.json();
     errEl.textContent = d.error || 'שגיאה';
@@ -766,13 +783,13 @@ function renderAdminSuggestions(suggestions) {
 
 async function approveSuggestion(id) {
   const res = await fetch('/api/suggestions/' + id + '/approve', { method: 'POST', headers: authHeaders() });
-  if (res.ok) { showToast('סקר נוצר מההצעה 🎉', 'success'); loadAdminSuggestions(); loadAdminQuestions(); }
+  if (res.ok) { showToast('ההצעה אושרה ויצאה לאור 🎉', 'success'); loadAdminSuggestions(); loadAdminQuestions(); }
   else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }
 
 async function deleteSuggestion(id) {
   const res = await fetch('/api/suggestions/' + id, { method: 'DELETE', headers: authHeaders() });
-  if (res.ok) { showToast('הצעה נדחתה', 'success'); loadAdminSuggestions(); }
+  if (res.ok) { showToast('ההצעה נדחתה לפח ההיסטוריה 🗑️', 'success'); loadAdminSuggestions(); }
 }
 
 // ===== GUEST VOTE =====
@@ -788,7 +805,7 @@ async function guestVote(questionId, choice, btn) {
     loadMarkets();
     // Show prompt to register
     const toast = document.getElementById('toast');
-    toast.innerHTML = 'הצבעת! <button onclick="showAuthOverlay()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:20px;padding:2px 10px;margin-right:8px;cursor:pointer;font-family:Rubik,sans-serif;font-size:12px;">הרשם כדי להמר 🚀</button>';
+    toast.innerHTML = 'הצבעת! עכשיו תתפלל 🕯️ <button onclick="showAuthOverlay()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:20px;padding:2px 10px;margin-right:8px;cursor:pointer;font-family:Rubik,sans-serif;font-size:12px;">הרשם כדי להמר 🚀</button>';
     toast.className = 'toast success show';
     setTimeout(() => { toast.className = 'toast'; toast.textContent=''; }, 5000);
   } else if (data.error === 'already_voted') {
@@ -846,5 +863,5 @@ async function saveProfile() {
   const navUser = document.getElementById('nav-username');
   if (navUser) navUser.textContent = data.display_name;
   document.getElementById('profile-modal').classList.remove('open');
-  showToast('הפרופיל עודכן ✓', 'success');
+  showToast('שם חדש, אותו ציון 😌', 'success');
 }
