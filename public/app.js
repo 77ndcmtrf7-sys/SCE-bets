@@ -51,7 +51,7 @@ window.onload = () => {
 async function tryAutoLogin() {
   const res = await fetch(`${API}/api/me`, { headers: authHeaders() });
   if (res.ok) { const d = await res.json(); loginSuccess(d); }
-  else localStorage.removeItem('token');
+  else { localStorage.removeItem('token'); updateGuestUI(false); loadMarkets(); }
 }
 
 // ===== PASSWORD TOGGLE =====
