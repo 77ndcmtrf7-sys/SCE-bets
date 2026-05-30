@@ -559,7 +559,10 @@ function renderComplaints(complaints) {
     <div class="complaint-item">
       <div class="complaint-item-header">
         <div class="complaint-author">${c.author_name}</div>
-        <div class="complaint-stars ${lowClass}">${stars} ${c.rating}/10</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="complaint-stars ${lowClass}">${stars} ${c.rating}/10</div>
+          ${currentUser && currentUser.is_admin ? `<button class="admin-q-btn delete" onclick="deleteComplaint(${c.id})" style="font-size:11px;padding:3px 10px;">מחק</button>` : ''}
+        </div>
       </div>
       <div class="complaint-text-content">${c.content}</div>
       <div class="complaint-date">${date}</div>
@@ -712,4 +715,12 @@ async function guestVote(questionId, choice, btn) {
   } else {
     showToast(data.error || 'שגיאה', 'error');
   }
+}
+
+// ===== DELETE COMPLAINT =====
+async function deleteComplaint(id) {
+  if (!confirm('למחוק את הבקשה הזו?')) return;
+  const res = await fetch('/api/complaints/' + id, { method: 'DELETE', headers: authHeaders() });
+  if (res.ok) { showToast('נמחק', 'success'); loadComplaints(); }
+  else { const d = await res.json(); showToast(d.error||'שגיאה','error'); }
 }

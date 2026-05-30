@@ -432,4 +432,13 @@ app.get('/api/questions/public', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// Delete complaint (admin)
+app.delete('/api/complaints/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM complaints WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.listen(PORT, () => console.log(`🎓 SCE Bets רץ על http://localhost:${PORT}`));
