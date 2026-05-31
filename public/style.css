@@ -343,27 +343,45 @@ body::after {
   /* Navbar */
   .navbar {
     padding: 0 12px;
-    gap: 0;
     height: 56px;
     position: fixed !important;
     top: 0; left: 0; right: 0;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
   }
+  /* לוגו באמצע עם position absolute */
   .nav-logo-wrap {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 6px;
   }
-  .nav-logo { font-size: 20px; }
-  .nav-sce-badge { font-size: 12px; padding: 2px 7px; }
+  .nav-logo { font-size: 22px; }
+  .nav-sce-badge { font-size: 11px; padding: 2px 7px; }
   .nav-center { display: none; }
-  .nav-right { gap: 6px; justify-content: flex-end; }
-  .user-chip { display: block; font-size: 12px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .balance-chip { display: none; }
-  .logout-btn { display: none; }
-  .theme-toggle { width: 30px; height: 30px; font-size: 15px; }
+  /* צד שמאל — רק theme toggle */
+  .navbar > .nav-right {
+    gap: 6px;
+    margin-right: auto;
+    flex-direction: row-reverse;
+  }
+  /* שם משתמש גלוי, קצר */
+  .user-chip {
+    display: block !important;
+    font-size: 12px;
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .balance-chip { display: none !important; }
+  .logout-btn   { display: none !important; }
+  .auth-nav-btn { font-size: 11px; padding: 5px 10px; }
+  .theme-toggle { width: 30px; height: 30px; font-size: 15px; flex-shrink: 0; }
 
   /* Push content below fixed navbar */
   #app { padding-top: 56px; }
