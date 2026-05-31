@@ -74,20 +74,19 @@ function updateGuestUI(loggedIn = false) {
   const adminTab   = document.getElementById('admin-tab');
   const mobileAdmin = document.getElementById('mobile-admin-tab');
   const navBalance = document.getElementById('nav-balance-chip');
-  const navBalanceMobile = document.getElementById('nav-balance-chip-mobile');
   const navUsername = document.getElementById('nav-username');
 
   if (loggedIn) {
     if (logoutBtn)  logoutBtn.style.display  = '';
     if (authNavBtn) authNavBtn.style.display = 'none';
     if (navBalance) navBalance.style.display = '';
-  if (navBalanceMobile) navBalanceMobile.style.display = '';
     if (navUsername) navUsername.style.display = '';
   } else {
     if (logoutBtn)  logoutBtn.style.display  = 'none';
     if (authNavBtn) authNavBtn.style.display = '';
     if (navBalance) navBalance.style.display = 'none';
-  if (navBalanceMobile) navBalanceMobile.style.display = 'none';
+  const _mWrap = document.getElementById('nav-balance-mobile-wrap');
+  if (_mWrap) _mWrap.style.display = 'none';
     if (navUsername) navUsername.style.display = 'none';
     if (adminTab)   adminTab.style.display   = 'none';
     if (mobileAdmin) mobileAdmin.style.display = 'none';
@@ -147,8 +146,8 @@ function loginSuccess(user) {
   document.getElementById('nav-balance').textContent  = formatNum(user.balance);
   const _mobVal = document.getElementById('nav-balance-mobile');
   if (_mobVal) _mobVal.textContent = formatNum(user.balance);
-  const _mobChip = document.getElementById('nav-balance-chip-mobile');
-  if (_mobChip) _mobChip.style.display = '';
+  const _mobWrap = document.getElementById('nav-balance-mobile-wrap');
+  if (_mobWrap) _mobWrap.style.display = '';
   updateGuestUI(true);
   if (user.is_admin) {
     document.getElementById('admin-tab').style.display = '';
@@ -336,7 +335,7 @@ async function placeBet() {
   currentUser.balance=data.new_balance;
   document.getElementById('nav-balance').textContent=formatNum(currentUser.balance);
   const mobVal2 = document.getElementById('nav-balance-mobile');
-  if (mobVal2) mobVal2.textContent=formatNum(currentUser.balance);
+  if (mobVal2) mobVal2.textContent = formatNum(currentUser.balance);
   document.getElementById('bet-modal').classList.remove('open');
   showToast(`${formatNum(amount)} נק"ז על השולחן. אין דרך חזרה 🎯`, 'success');
   loadMarkets();
