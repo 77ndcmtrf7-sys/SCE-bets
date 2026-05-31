@@ -1566,3 +1566,99 @@ body::after {
     flex-shrink: 0;
   }
 }
+
+/* ===== CHOICE BLOCKS ===== */
+.choice-blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.choice-block {
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Rubik', sans-serif;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.choice-block:active { transform: scale(0.96); }
+
+.yes-block {
+  background: linear-gradient(145deg, rgba(34,180,100,0.18), rgba(34,180,100,0.08));
+  border: 1px solid rgba(34,180,100,0.3);
+}
+
+.no-block {
+  background: linear-gradient(145deg, rgba(255,59,48,0.18), rgba(255,59,48,0.08));
+  border: 1px solid rgba(255,59,48,0.3);
+}
+
+.yes-block.winner { background: linear-gradient(145deg, rgba(34,180,100,0.35), rgba(34,180,100,0.15)); border-color: rgba(34,180,100,0.6); }
+.no-block.winner  { background: linear-gradient(145deg, rgba(255,59,48,0.35), rgba(255,59,48,0.15)); border-color: rgba(255,59,48,0.6); }
+.yes-block.loser, .no-block.loser { opacity: 0.45; filter: grayscale(0.4); }
+
+.choice-pct {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.yes-block .choice-pct { color: var(--yes); }
+.no-block  .choice-pct { color: var(--no); }
+
+.pct-changing {
+  animation: pctPulse 0.2s ease;
+}
+@keyframes pctPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.choice-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.yes-block .choice-label { color: var(--yes); opacity: 0.85; }
+.no-block  .choice-label { color: var(--no); opacity: 0.85; }
+
+/* hover — דסקטופ בלבד */
+@media (hover: hover) {
+  .yes-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34,180,100,0.25);
+    filter: brightness(1.08);
+  }
+  .yes-block:hover::after { opacity: 1; }
+  .no-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,59,48,0.25);
+    filter: brightness(1.08);
+  }
+  .no-block:hover::after { opacity: 1; }
+}
+
+/* resolved blocks */
+.resolved-blocks { pointer-events: none; }
+
+/* הסרת card-bar-wrap (לא נחוץ יותר) */
+.card-bar-wrap { display: none; }

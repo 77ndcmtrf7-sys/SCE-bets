@@ -201,10 +201,16 @@ function deadlineInfo(deadline) {
 }
 
 // ===== MARKETS =====
-async function loadMarkets() {
+async function loadMarkets(silent=false) {
   const res  = await fetch(`${API}/api/questions`,{headers:authHeaders()});
   const data = await res.json();
-  renderMarkets(data.questions||[]);
+  const questions = data.questions || [];
+  if (silent && document.querySelectorAll('.market-card').length === questions.length) {
+    // עדכון אחוזים בלבד — בלי re-render
+    updateCardPcts(questions);
+  } else {
+    renderMarkets(questions);
+  }
 }
 
 function renderMarkets(questions) {
@@ -214,56 +220,113 @@ function renderMarkets(questions) {
     return;
   }
   grid.innerHTML = questions.map(q=>{
-    const total=q.yes_volume+q.no_volume;
-    const yesPct=total>0?Math.round((q.yes_volume/total)*100):50;
-    const noPct=100-yesPct;
-    const dl=deadlineInfo(q.deadline);
-    const showCountdown = q.deadline && !q.resolved && (new Date(q.deadline) - Date.now()) < 86400000 && (new Date(q.deadline) - Date.now()) > 0;
+    const total   = q.yes_volume + q.no_volume;
+    const yesPct  = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
+    const noPct   = 100 - yesPct;
+    const dl      = deadlineInfo(q.deadline);
+    const showCountdown = q.deadline && !q.resolved &&
+      (new Date(q.deadline) - Date.now()) < 86400000 &&
+      (new Date(q.deadline) - Date.now()) > 0;
     const dlHtml = dl
       ? `<div class="card-deadline ${dl.cls}">
            ${showCountdown
              ? `<span class="card-countdown" data-deadline="${q.deadline}" data-id="${q.id}">⏱ ...</span>`
              : `⏱ ${dl.text}`}
          </div>`
-      : '<div style="margin-bottom:14px"></div>';
-    const deptTag=q.department?`<span class="dept-tag">${q.department}</span>`:'';
-    return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${!q.resolved?(currentUser?`onclick="openBetModal(${q.id})"`:'onclick=""'):''}> 
-      <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
-      <div class="card-question">${q.question}</div>
-      <div class="card-bar-wrap">
-        <div class="card-bar"><div class="card-bar-fill" style="width:${yesPct}%"></div></div>
-        <div class="card-bar-labels">
-          <span class="yes-label">${q.option_yes||'כן'} ${yesPct}%</span>
-          <span class="no-label">${noPct}% ${q.option_no||'לא'}</span>
+      : '';
+    const deptTag = q.department ? `<span class="dept-tag">${q.department}</span>` : '';
+
+    const betBlocksUser = `
+      <div class="choice-blocks">
+        <button class="choice-block yes-block" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">
+          <span class="choice-pct yes-pct" data-qid="${q.id}" data-side="yes">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </button>
+        <button class="choice-block no-block" onclick="event.stopPropagation();openBetModal(${q.id},'NO')">
+          <span class="choice-pct no-pct" data-qid="${q.id}" data-side="no">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </button>
+      </div>`;
+
+    const betBlocksGuest = `
+      <div class="choice-blocks">
+        <button class="choice-block yes-block" onclick="event.stopPropagation();guestVote(${q.id},'YES',this)">
+          <span class="choice-pct yes-pct" data-qid="${q.id}" data-side="yes">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </button>
+        <button class="choice-block no-block" onclick="event.stopPropagation();guestVote(${q.id},'NO',this)">
+          <span class="choice-pct no-pct" data-qid="${q.id}" data-side="no">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </button>
+      </div>`;
+
+    const resolvedBlock = `
+      <div class="choice-blocks resolved-blocks">
+        <div class="choice-block yes-block ${q.result==='YES'?'winner':'loser'}">
+          <span class="choice-pct">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </div>
+        <div class="choice-block no-block ${q.result==='NO'?'winner':'loser'}">
+          <span class="choice-pct">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
         </div>
       </div>
+      <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
 
+    return `
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}">
+      <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
+      <div class="card-question">${q.question}</div>
+      ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
       <div class="card-footer">
         <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
-        ${q.resolved
-          ?`<div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`
-          :currentUser
-            ?`<div class="bet-buttons">
-                <button class="bet-btn yes" onclick="event.stopPropagation();openBetModal(${q.id},'YES')">${q.option_yes||'כן'}</button>
-                <button class="bet-btn no"  onclick="event.stopPropagation();openBetModal(${q.id},'NO')">${q.option_no||'לא'}</button>
-              </div>`
-            :`<div class="bet-buttons">
-                <button class="bet-btn yes" onclick="event.stopPropagation();guestVote(${q.id},'YES',this)">${q.option_yes||'כן'}</button>
-                <button class="bet-btn no"  onclick="event.stopPropagation();guestVote(${q.id},'NO',this)">${q.option_no||'לא'}</button>
-              </div>`
-        }
+        ${dlHtml}
       </div>
-      <div class="card-stats-row" dir="ltr">
-        <span class="stat-yes">${q.yes_count||0}</span>
-        <span class="stat-mid">vs</span>
-        <span class="stat-no">${q.no_count||0}</span>
-        <span class="stat-label">bets</span>
-      </div>
-      ${dlHtml}
-          </div>`;
+    </div>`;
   }).join('');
   startCountdowns();
+  // אנימציית כניסה לכרטיסים
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.market-card').forEach((card, i) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(12px)';
+      setTimeout(() => {
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, i * 60);
+    });
+  });
+}
+
+// ===== ANIMATE PCT UPDATE =====
+function animatePctChange(el, newVal) {
+  const current = parseInt(el.textContent);
+  if (isNaN(current) || current === newVal) return;
+  const step = newVal > current ? 1 : -1;
+  const duration = Math.abs(newVal - current) * 18;
+  let val = current;
+  el.classList.add('pct-changing');
+  const interval = setInterval(() => {
+    val += step;
+    el.textContent = val + '%';
+    if (val === newVal) {
+      clearInterval(interval);
+      el.classList.remove('pct-changing');
+    }
+  }, duration / Math.abs(newVal - current));
+}
+
+function updateCardPcts(questions) {
+  questions.forEach(q => {
+    const total  = q.yes_volume + q.no_volume;
+    const yesPct = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
+    const noPct  = 100 - yesPct;
+    const yesEl = document.querySelector(`.yes-pct[data-qid="${q.id}"]`);
+    const noEl  = document.querySelector(`.no-pct[data-qid="${q.id}"]`);
+    if (yesEl) animatePctChange(yesEl, yesPct);
+    if (noEl)  animatePctChange(noEl, noPct);
+  });
 }
 
 // ===== BET MODAL =====
