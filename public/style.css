@@ -315,7 +315,7 @@ body::after {
 .nav-tab.active { background: var(--bg3); color: var(--text); font-weight: 600; }
 
 .nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.nav-left  { display: flex; align-items: center; gap: 10px; }
+.nav-left  { display: none; }
 
 .balance-chip {
   display: flex; align-items: baseline; gap: 4px;
@@ -341,7 +341,7 @@ body::after {
 
 /* ===== MOBILE ===== */
 @media (max-width: 600px) {
-  /* Navbar — 3 עמודות שוות */
+  /* Navbar מובייל — grid 3 עמודות */
   .navbar {
     padding: 0 10px;
     height: 56px;
@@ -349,21 +349,19 @@ body::after {
     top: 0; left: 0; right: 0;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: "right logo left";
     align-items: center;
-    gap: 0;
   }
-  /* עמודה 1 (ימין ב-RTL): שם + תמה */
   .nav-right {
-    grid-column: 1;
+    grid-area: right;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 5px;
     overflow: hidden;
   }
-  /* עמודה 2 (אמצע): לוגו */
   .nav-logo-wrap {
-    grid-column: 2;
+    grid-area: logo;
     position: static;
     transform: none;
     display: flex;
@@ -372,18 +370,17 @@ body::after {
     gap: 5px;
     justify-content: center;
     cursor: pointer;
+    white-space: nowrap;
   }
   .nav-logo { font-size: 20px; }
   .nav-sce-badge { font-size: 11px; padding: 2px 6px; }
-  /* עמודה 3 (שמאל): יתרה */
   .nav-left {
-    grid-column: 3;
+    grid-area: left;
     display: flex;
     align-items: center;
     justify-content: flex-start;
   }
   .nav-center { display: none; }
-  /* שם משתמש */
   .user-chip {
     display: block !important;
     font-size: 12px;
@@ -394,7 +391,6 @@ body::after {
     flex-shrink: 1;
     min-width: 0;
   }
-  /* יתרה */
   .balance-chip {
     padding: 4px 8px;
     font-size: 12px;

@@ -74,17 +74,20 @@ function updateGuestUI(loggedIn = false) {
   const adminTab   = document.getElementById('admin-tab');
   const mobileAdmin = document.getElementById('mobile-admin-tab');
   const navBalance = document.getElementById('nav-balance-chip');
+  const navBalanceMobile = document.getElementById('nav-balance-chip-mobile');
   const navUsername = document.getElementById('nav-username');
 
   if (loggedIn) {
     if (logoutBtn)  logoutBtn.style.display  = '';
     if (authNavBtn) authNavBtn.style.display = 'none';
     if (navBalance) navBalance.style.display = '';
+  if (navBalanceMobile) navBalanceMobile.style.display = '';
     if (navUsername) navUsername.style.display = '';
   } else {
     if (logoutBtn)  logoutBtn.style.display  = 'none';
     if (authNavBtn) authNavBtn.style.display = '';
     if (navBalance) navBalance.style.display = 'none';
+  if (navBalanceMobile) navBalanceMobile.style.display = 'none';
     if (navUsername) navUsername.style.display = 'none';
     if (adminTab)   adminTab.style.display   = 'none';
     if (mobileAdmin) mobileAdmin.style.display = 'none';
@@ -142,6 +145,10 @@ function loginSuccess(user) {
   if (banner) banner.style.display = 'none';
   document.getElementById('nav-username').textContent = user.display_name;
   document.getElementById('nav-balance').textContent  = formatNum(user.balance);
+  const _mobVal = document.getElementById('nav-balance-mobile');
+  if (_mobVal) _mobVal.textContent = formatNum(user.balance);
+  const _mobChip = document.getElementById('nav-balance-chip-mobile');
+  if (_mobChip) _mobChip.style.display = '';
   updateGuestUI(true);
   if (user.is_admin) {
     document.getElementById('admin-tab').style.display = '';
@@ -220,11 +227,10 @@ function renderMarkets(questions) {
              : `⏱ ${dl.text}`}
          </div>`
       : '<div style="margin-bottom:14px"></div>';
-    const deptTag=q.department?`<div class="dept-tag">${q.department}</div>`:'';
+    const deptTag=q.department?`<span class="dept-tag">${q.department}</span>`:'';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${!q.resolved?(currentUser?`onclick="openBetModal(${q.id})"`:'onclick=""'):''}> 
-      ${deptTag}
-      <div class="card-category">${q.category||'כללי'}</div>
+      <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
       <div class="card-bar-wrap">
         <div class="card-bar"><div class="card-bar-fill" style="width:${yesPct}%"></div></div>
@@ -329,6 +335,8 @@ async function placeBet() {
   if(!res.ok) return setModalError(data.error||'שגיאה');
   currentUser.balance=data.new_balance;
   document.getElementById('nav-balance').textContent=formatNum(currentUser.balance);
+  const mobVal2 = document.getElementById('nav-balance-mobile');
+  if (mobVal2) mobVal2.textContent=formatNum(currentUser.balance);
   document.getElementById('bet-modal').classList.remove('open');
   showToast(`${formatNum(amount)} נק"ז על השולחן. אין דרך חזרה 🎯`, 'success');
   loadMarkets();
@@ -568,6 +576,7 @@ function startBalancePolling() {
 
 function animateBalance(newBalance, diff) {
   const el = document.getElementById('nav-balance');
+  const elM = document.getElementById('nav-balance-mobile');
   if (!el) return;
 
   // Flash animation
