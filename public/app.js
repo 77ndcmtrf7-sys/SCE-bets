@@ -212,7 +212,14 @@ function renderMarkets(questions) {
     const yesPct=total>0?Math.round((q.yes_volume/total)*100):50;
     const noPct=100-yesPct;
     const dl=deadlineInfo(q.deadline);
-    const dlHtml=dl?`<div class="card-deadline ${dl.cls}">⏱ ${dl.text}</div>`:'<div style="margin-bottom:14px"></div>';
+    const showCountdown = q.deadline && !q.resolved && (new Date(q.deadline) - Date.now()) < 86400000 && (new Date(q.deadline) - Date.now()) > 0;
+    const dlHtml = dl
+      ? `<div class="card-deadline ${dl.cls}">
+           ${showCountdown
+             ? `<span class="card-countdown" data-deadline="${q.deadline}" data-id="${q.id}">⏱ ...</span>`
+             : `⏱ ${dl.text}`}
+         </div>`
+      : '<div style="margin-bottom:14px"></div>';
     const deptTag=q.department?`<div class="dept-tag">${q.department}</div>`:'';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${!q.resolved?(currentUser?`onclick="openBetModal(${q.id})"`:'onclick=""'):''}> 
@@ -251,6 +258,7 @@ function renderMarkets(questions) {
       ${dlHtml}
           </div>`;
   }).join('');
+  startCountdowns();
 }
 
 // ===== BET MODAL =====
@@ -376,6 +384,62 @@ function renderLeaderboard(users) {
     </div>`).join('');
 }
 
+// ===== CONFETTI =====
+function launchConfetti(x, y) {
+  const colors = ['#ff6eb4','#ff9f0a','#34c759','#007aff','#af52de','#fff'];
+  for (let i = 0; i < 36; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const angle = (Math.random() * 360) * (Math.PI / 180);
+    const dist  = 80 + Math.random() * 120;
+    el.style.cssText = `
+      left: ${x}px; top: ${y}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      --dx: ${Math.cos(angle) * dist}px;
+      --dy: ${Math.sin(angle) * dist + 60}px;
+      --rot: ${Math.random() * 720 - 360}deg;
+      --dur: ${0.8 + Math.random() * 0.7}s;
+      width: ${5 + Math.random() * 7}px;
+      height: ${5 + Math.random() * 7}px;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+}
+
+// ===== COUNTDOWN =====
+const countdownTimers = {};
+
+function startCountdowns() {
+  // נקה timers קיימים
+  Object.values(countdownTimers).forEach(t => clearInterval(t));
+  Object.keys(countdownTimers).forEach(k => delete countdownTimers[k]);
+
+  document.querySelectorAll('.card-countdown[data-deadline]').forEach(el => {
+    const deadline = new Date(el.dataset.deadline);
+    function update() {
+      const diff = deadline - Date.now();
+      if (diff <= 0) { el.textContent = 'נסגר'; clearInterval(countdownTimers[el.dataset.id]); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (h > 0) {
+        el.textContent = `⏱ ${h}ש׳ ${m}ד׳`;
+        el.classList.remove('urgent');
+      } else if (m > 0) {
+        el.textContent = `⏱ ${m}:${String(s).padStart(2,'0')}`;
+        el.classList.toggle('urgent', m < 5);
+      } else {
+        el.textContent = `⏱ ${s}ש׳`;
+        el.classList.add('urgent');
+      }
+    }
+    update();
+    const id = setInterval(update, 1000);
+    countdownTimers[el.dataset.id] = id;
+  });
+}
+
 // ===== CATEGORY HELPERS =====
 function toggleCustomCategory(customInputId, select) {
   const customInput = document.getElementById(customInputId);
@@ -493,6 +557,11 @@ function startBalancePolling() {
       const diff = newBalance - currentUser.balance;
       currentUser.balance = newBalance;
       animateBalance(newBalance, diff);
+      if (diff > 50) {
+        // זכייה — קונפטי ממרכז המסך
+        launchConfetti(window.innerWidth / 2, window.innerHeight / 3);
+        showToast(`+${formatNum(Math.round(diff))} נק"ז — ניצחת! 🎉`, 'success');
+      }
     }
   }, 8000);
 }
