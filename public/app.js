@@ -915,31 +915,35 @@ async function loadAdminActivity(type = 'all') {
 function renderAdminActivity(items) {
   const list = document.getElementById('admin-activity-list');
 
-  const filterBar = `
-    <div class="activity-filter-bar">
-      <button class="activity-filter-btn active" onclick="filterActivity('all', this)">הכל</button>
-      <button class="activity-filter-btn" onclick="filterActivity('bet', this)">🎯 הימורים</button>
-      <button class="activity-filter-btn" onclick="filterActivity('register', this)">👤 הרשמות</button>
-      <button class="activity-filter-btn" onclick="filterActivity('rename', this)">✏️ שינוי שם</button>
-      <button class="activity-filter-btn" onclick="filterActivity('guest_vote', this)">👀 אורחים</button>
-      <button class="activity-filter-btn" onclick="filterActivity('question', this)">📊 סקרים</button>
-      <button class="activity-filter-btn" onclick="filterActivity('resolve', this)">🏁 סגירות</button>
-    </div>`;
-
-  if (!items.length) {
-    list.innerHTML = filterBar + '<div style="color:var(--text3);font-size:13px;padding:12px 0;">אין פעילות עדיין</div>';
-    return;
+  // רנדר פילטר בר רק בפעם הראשונה
+  if (!document.getElementById('activity-filter-bar')) {
+    const filterBar = document.createElement('div');
+    filterBar.id = 'activity-filter-bar';
+    filterBar.className = 'activity-filter-bar';
+    filterBar.innerHTML = `
+      <button class="activity-filter-btn active" data-type="all" onclick="filterActivity('all', this)">הכל</button>
+      <button class="activity-filter-btn" data-type="bet" onclick="filterActivity('bet', this)">🎯 הימורים</button>
+      <button class="activity-filter-btn" data-type="register" onclick="filterActivity('register', this)">👤 הרשמות</button>
+      <button class="activity-filter-btn" data-type="rename" onclick="filterActivity('rename', this)">✏️ שינוי שם</button>
+      <button class="activity-filter-btn" data-type="guest_vote" onclick="filterActivity('guest_vote', this)">👀 אורחים</button>
+      <button class="activity-filter-btn" data-type="question" onclick="filterActivity('question', this)">📊 סקרים</button>
+      <button class="activity-filter-btn" data-type="resolve" onclick="filterActivity('resolve', this)">🏁 סגירות</button>`;
+    list.parentNode.insertBefore(filterBar, list);
   }
 
   const icons = { bet: '🎯', register: '👤', resolve: '🏁', guest_vote: '👀', question: '📊', rename: '✏️' };
-  const rows = items.map(item => `
+
+  if (!items.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">אין פעילות עדיין</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(item => `
     <div class="activity-item">
       <span class="activity-icon">${icons[item.type] || '•'}</span>
       <span class="activity-msg">${item.message}</span>
       <span class="activity-time">${formatActivityTime(item.created_at)}</span>
     </div>`).join('');
-
-  list.innerHTML = filterBar + rows;
 }
 
 function filterActivity(type, btn) {
