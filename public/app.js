@@ -905,35 +905,61 @@ async function deleteSuggestion(id) {
 }
 
 // ===== ADMIN ACTIVITY LOG =====
-async function loadAdminActivity() {
-  const res  = await fetch('/api/admin/activity', { headers: authHeaders() });
+async function loadAdminActivity(type = 'all') {
+  const url = type === 'all' ? '/api/admin/activity' : `/api/admin/activity?type=${type}`;
+  const res  = await fetch(url, { headers: authHeaders() });
   const data = await res.json();
   renderAdminActivity(data.activity || []);
 }
 
 function renderAdminActivity(items) {
   const list = document.getElementById('admin-activity-list');
+
+  const filterBar = `
+    <div class="activity-filter-bar">
+      <button class="activity-filter-btn active" onclick="filterActivity('all', this)">הכל</button>
+      <button class="activity-filter-btn" onclick="filterActivity('bet', this)">🎯 הימורים</button>
+      <button class="activity-filter-btn" onclick="filterActivity('register', this)">👤 הרשמות</button>
+      <button class="activity-filter-btn" onclick="filterActivity('rename', this)">✏️ שינוי שם</button>
+      <button class="activity-filter-btn" onclick="filterActivity('guest_vote', this)">👀 אורחים</button>
+      <button class="activity-filter-btn" onclick="filterActivity('question', this)">📊 סקרים</button>
+      <button class="activity-filter-btn" onclick="filterActivity('resolve', this)">🏁 סגירות</button>
+    </div>`;
+
   if (!items.length) {
-    list.innerHTML = '<div style="color:var(--text3);font-size:13px;">אין פעילות עדיין</div>';
+    list.innerHTML = filterBar + '<div style="color:var(--text3);font-size:13px;padding:12px 0;">אין פעילות עדיין</div>';
     return;
   }
-  const icons = { bet: '🎯', register: '👤', resolve: '🏁', guest_vote: '👀', question: '📊' };
-  list.innerHTML = items.map(item => {
-    const ago = timeAgo(item.created_at);
-    return `<div class="activity-item">
+
+  const icons = { bet: '🎯', register: '👤', resolve: '🏁', guest_vote: '👀', question: '📊', rename: '✏️' };
+  const rows = items.map(item => `
+    <div class="activity-item">
       <span class="activity-icon">${icons[item.type] || '•'}</span>
       <span class="activity-msg">${item.message}</span>
-      <span class="activity-time">${ago}</span>
-    </div>`;
-  }).join('');
+      <span class="activity-time">${formatActivityTime(item.created_at)}</span>
+    </div>`).join('');
+
+  list.innerHTML = filterBar + rows;
 }
 
-function timeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60)   return `לפני ${diff} שניות`;
-  if (diff < 3600) return `לפני ${Math.floor(diff/60)} דקות`;
-  if (diff < 86400) return `לפני ${Math.floor(diff/3600)} שעות`;
-  return `לפני ${Math.floor(diff/86400)} ימים`;
+function filterActivity(type, btn) {
+  document.querySelectorAll('.activity-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadAdminActivity(type);
+}
+
+function formatActivityTime(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const timeStr = `${hh}:${mm}`;
+  if (isToday) return `היום ${timeStr}`;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mo} ${timeStr}`;
 }
 
 // ===== GUEST VOTE =====

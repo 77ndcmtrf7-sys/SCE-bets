@@ -192,7 +192,8 @@ app.post('/api/bet', auth, async (req, res) => {
     await client.query('COMMIT');
 
     const { rows: uRows } = await client.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
-    logActivity('bet', `${req.user.display_name} הימר ${amount} נק"ז על "${qRows[0].question}"`);
+    const choiceLabel = choice === 'YES' ? (qRows[0].option_yes || 'כן') : (qRows[0].option_no || 'לא');
+    logActivity('bet', `${req.user.display_name} הימר ${amount} נק"ז על "${qRows[0].question}" — ${choiceLabel}`);
     res.json({ success: true, new_balance: uRows[0].balance });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
@@ -484,6 +485,9 @@ app.post('/api/me/update', auth, async (req, res) => {
     }
 
     const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [req.user.id]);
+    if (req.user.display_name !== display_name) {
+      logActivity('rename', `${req.user.display_name} שינה שם ל-${display_name}`);
+    }
     res.json({ display_name: rows[0].display_name });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -491,7 +495,15 @@ app.post('/api/me/update', auth, async (req, res) => {
 // --- Activity log endpoint ---
 app.get('/api/admin/activity', adminAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 100');
+    const { type } = req.query;
+    let query = 'SELECT * FROM activity_log';
+    const params = [];
+    if (type && type !== 'all') {
+      query += ' WHERE type = $1';
+      params.push(type);
+    }
+    query += ' ORDER BY created_at DESC LIMIT 200';
+    const { rows } = await pool.query(query, params);
     res.json({ activity: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
