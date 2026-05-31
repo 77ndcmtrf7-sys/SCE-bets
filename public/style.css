@@ -1498,3 +1498,24 @@ body::after {
 }
 
 /* ===== BANNER GUEST TEXT FIX ===== */
+
+/* ===== SUGGEST BTN INLINE (mobile) ===== */
+.suggest-pill-inline { display: none; }
+
+@media (max-width: 600px) {
+  .markets-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: right;
+  }
+  .markets-header h1 { margin-bottom: 2px; }
+  .suggest-btn-wrap { display: none; }
+  .suggest-pill-inline {
+    display: block;
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 7px 13px;
+    white-space: nowrap;
+  }
+}
