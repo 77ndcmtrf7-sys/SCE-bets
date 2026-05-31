@@ -1515,8 +1515,8 @@ body::after {
   .suggest-pill-inline {
     display: block;
     flex-shrink: 0;
-    font-size: 12px;
-    padding: 7px 13px;
+    font-size: 14px;
+    padding: 10px 18px;
     white-space: nowrap;
   }
 }
