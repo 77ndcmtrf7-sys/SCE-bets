@@ -364,12 +364,13 @@ body::after {
   .nav-logo { font-size: 20px; }
   .nav-sce-badge { font-size: 11px; padding: 2px 7px; }
   .nav-center { display: none; }
-  /* צד ימין — שם + תמה (כבר first child ב-DOM) */
+  /* nav-right: שם+תמה מימין, יתרה משמאל */
   .nav-right {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
+    flex-direction: row-reverse;
   }
   /* שם משתמש */
   .user-chip {
@@ -380,11 +381,12 @@ body::after {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* יתרה — צד שמאל */
+  /* יתרה — נדחפת לשמאל בגלל row-reverse */
   .balance-chip {
     padding: 4px 10px;
     font-size: 12px;
     flex-shrink: 0;
+    margin-right: auto;
   }
   .balance-chip span:first-child { font-size: 13px; font-weight: 700; }
   .balance-chip .balance-label { display: inline; font-size: 11px; }

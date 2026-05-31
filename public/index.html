@@ -48,11 +48,6 @@
 <!-- APP -->
 <div id="app">
   <nav class="navbar">
-    <!-- צד שמאל: יתרה -->
-    <div class="balance-chip" id="nav-balance-chip" style="display:none">
-      <span id="nav-balance">—</span>
-      <span class="balance-label">נק"ז</span>
-    </div>
     <!-- אמצע: לוגו -->
     <div class="nav-logo-wrap" onclick="softRefresh()" style="cursor:pointer;">
       <div class="nav-logo">Bets</div>
@@ -66,8 +61,12 @@
       <button class="nav-tab" onclick="showSection('complaints',this)">בקשות סטודנט</button>
       <button class="nav-tab" id="admin-tab" onclick="showSection('admin',this)" style="display:none">משרד הדיקן</button>
     </div>
-    <!-- צד ימין: שם + תמה + יציאה -->
+    <!-- צד ימין: יתרה + שם + תמה + יציאה -->
     <div class="nav-right">
+      <div class="balance-chip" id="nav-balance-chip" style="display:none">
+        <span id="nav-balance">—</span>
+        <span class="balance-label">נק"ז</span>
+      </div>
       <div class="user-chip" id="nav-username" onclick="openProfileModal()" style="display:none;cursor:pointer;" title="ערוך פרופיל">—</div>
       <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="עבור בין מצבי תצוגה">☀️</button>
       <button class="logout-btn" id="logout-btn" onclick="logout()" style="display:none">יציאה</button>
