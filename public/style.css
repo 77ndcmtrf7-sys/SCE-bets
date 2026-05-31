@@ -420,7 +420,7 @@ body::after {
   .markets-grid { grid-template-columns: 1fr !important; gap: 10px; }
   .market-card { padding: 12px 14px; }
   .card-question { font-size: 14px; margin-bottom: 4px; }
-  .card-category { margin-bottom: 4px; }
+  .card-category { margin-bottom: 0; }
   .card-bar-wrap { margin-bottom: 6px; }
   .card-footer { margin-top: 8px; padding-top: 8px; }
   .bet-btn { padding: 7px 16px; font-size: 13px; }
@@ -500,9 +500,16 @@ body::after {
 .market-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--border2); }
 .market-card.resolved { opacity:0.5; cursor:default; pointer-events:none; }
 
+.card-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+  flex-wrap: wrap;
+}
 .card-category {
   font-size: 11px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 7px;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0;
 }
 .card-question {
   font-size: 15px; font-weight: 600; line-height: 1.45;
@@ -1157,7 +1164,6 @@ body::after {
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
-  margin-bottom: 6px;
   background: var(--bg3);
   color: var(--text2);
 }
