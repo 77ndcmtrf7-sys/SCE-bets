@@ -350,7 +350,7 @@ body::after {
     align-items: center;
     justify-content: space-between;
   }
-  /* לוגו באמצע עם position absolute */
+  /* לוגו באמצע */
   .nav-logo-wrap {
     position: absolute;
     left: 50%;
@@ -359,17 +359,19 @@ body::after {
     flex-direction: row-reverse;
     align-items: center;
     gap: 6px;
+    pointer-events: none;
   }
-  .nav-logo { font-size: 22px; }
+  .nav-logo { font-size: 20px; }
   .nav-sce-badge { font-size: 11px; padding: 2px 7px; }
   .nav-center { display: none; }
-  /* צד שמאל — רק theme toggle */
-  .navbar > .nav-right {
+  /* צד ימין — שם + תמה (כבר first child ב-DOM) */
+  .nav-right {
+    display: flex;
+    align-items: center;
     gap: 6px;
-    margin-right: auto;
-    flex-direction: row-reverse;
+    flex-shrink: 0;
   }
-  /* שם משתמש גלוי, קצר */
+  /* שם משתמש */
   .user-chip {
     display: block !important;
     font-size: 12px;
@@ -378,12 +380,14 @@ body::after {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* יתרה — צד שמאל */
   .balance-chip {
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 12px;
+    flex-shrink: 0;
   }
-  .balance-chip .balance-label { display: none; }
-  .balance-chip span:first-child { font-size: 13px; }
+  .balance-chip span:first-child { font-size: 13px; font-weight: 700; }
+  .balance-chip .balance-label { display: inline; font-size: 11px; }
   .logout-btn   { display: none !important; }
   .auth-nav-btn { font-size: 11px; padding: 5px 10px; }
   .theme-toggle { width: 30px; height: 30px; font-size: 15px; flex-shrink: 0; }
