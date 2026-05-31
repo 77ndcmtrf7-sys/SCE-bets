@@ -48,29 +48,31 @@
 <!-- APP -->
 <div id="app">
   <nav class="navbar">
-    <!-- אמצע: לוגו -->
-    <div class="nav-logo-wrap" onclick="softRefresh()" style="cursor:pointer;">
-      <div class="nav-logo">Bets</div>
-      <div class="nav-sce-badge">SCE</div>
-    </div>
-    <!-- ניווט דסקטופ -->
-    <div class="nav-center">
-      <button class="nav-tab active" onclick="showSection('markets',this)">שוק</button>
-      <button class="nav-tab" onclick="showSection('portfolio',this)">ההימורים שלי</button>
-      <button class="nav-tab" onclick="showSection('leaderboard',this)">הטופ של הטופ</button>
-      <button class="nav-tab" onclick="showSection('complaints',this)">בקשות סטודנט</button>
-      <button class="nav-tab" id="admin-tab" onclick="showSection('admin',this)" style="display:none">משרד הדיקן</button>
-    </div>
-    <!-- צד ימין: יתרה + שם + תמה + יציאה -->
+    <!-- עמודה 1 (ימין): שם + תמה + יציאה -->
     <div class="nav-right">
-      <div class="balance-chip" id="nav-balance-chip" style="display:none">
-        <span id="nav-balance">—</span>
-        <span class="balance-label">נק"ז</span>
-      </div>
       <div class="user-chip" id="nav-username" onclick="openProfileModal()" style="display:none;cursor:pointer;" title="ערוך פרופיל">—</div>
       <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="עבור בין מצבי תצוגה">☀️</button>
       <button class="logout-btn" id="logout-btn" onclick="logout()" style="display:none">יציאה</button>
       <button class="auth-nav-btn" id="auth-nav-btn" onclick="showAuthOverlay()">כניסה / הרשמה</button>
+    </div>
+    <!-- עמודה 2 (אמצע): לוגו -->
+    <div class="nav-logo-wrap" onclick="softRefresh()" style="cursor:pointer;">
+      <div class="nav-logo">Bets</div>
+      <div class="nav-sce-badge">SCE</div>
+    </div>
+    <!-- עמודה 3 (שמאל): יתרה + ניווט דסקטופ -->
+    <div class="nav-left">
+      <div class="balance-chip" id="nav-balance-chip" style="display:none">
+        <span id="nav-balance">—</span>
+        <span class="balance-label">נק"ז</span>
+      </div>
+      <div class="nav-center">
+        <button class="nav-tab active" onclick="showSection('markets',this)">שוק</button>
+        <button class="nav-tab" onclick="showSection('portfolio',this)">ההימורים שלי</button>
+        <button class="nav-tab" onclick="showSection('leaderboard',this)">הטופ של הטופ</button>
+        <button class="nav-tab" onclick="showSection('complaints',this)">בקשות סטודנט</button>
+        <button class="nav-tab" id="admin-tab" onclick="showSection('admin',this)" style="display:none">משרד הדיקן</button>
+      </div>
     </div>
   </nav>
 

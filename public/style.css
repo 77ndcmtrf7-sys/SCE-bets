@@ -315,6 +315,7 @@ body::after {
 .nav-tab.active { background: var(--bg3); color: var(--text); font-weight: 600; }
 
 .nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-left  { display: flex; align-items: center; gap: 10px; }
 
 .balance-chip {
   display: flex; align-items: baseline; gap: 4px;
@@ -340,59 +341,70 @@ body::after {
 
 /* ===== MOBILE ===== */
 @media (max-width: 600px) {
-  /* Navbar */
+  /* Navbar — 3 עמודות שוות */
   .navbar {
-    padding: 0 12px;
+    padding: 0 10px;
     height: 56px;
     position: fixed !important;
     top: 0; left: 0; right: 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0;
+  }
+  /* עמודה 1 (ימין ב-RTL): שם + תמה */
+  .nav-right {
+    grid-column: 1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 5px;
+    overflow: hidden;
   }
-  /* לוגו באמצע */
+  /* עמודה 2 (אמצע): לוגו */
   .nav-logo-wrap {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    grid-column: 2;
+    position: static;
+    transform: none;
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
-    gap: 6px;
-    pointer-events: none;
+    gap: 5px;
+    justify-content: center;
+    cursor: pointer;
   }
   .nav-logo { font-size: 20px; }
-  .nav-sce-badge { font-size: 11px; padding: 2px 7px; }
-  .nav-center { display: none; }
-  /* nav-right: שם+תמה מימין, יתרה משמאל */
-  .nav-right {
+  .nav-sce-badge { font-size: 11px; padding: 2px 6px; }
+  /* עמודה 3 (שמאל): יתרה */
+  .nav-left {
+    grid-column: 3;
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    flex-direction: row-reverse;
+    justify-content: flex-start;
   }
+  .nav-center { display: none; }
   /* שם משתמש */
   .user-chip {
     display: block !important;
     font-size: 12px;
-    max-width: 72px;
+    max-width: 68px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
-  /* יתרה — נדחפת לשמאל בגלל row-reverse */
+  /* יתרה */
   .balance-chip {
-    padding: 4px 10px;
+    padding: 4px 8px;
     font-size: 12px;
     flex-shrink: 0;
-    margin-right: auto;
   }
-  .balance-chip span:first-child { font-size: 13px; font-weight: 700; }
-  .balance-chip .balance-label { display: inline; font-size: 11px; }
+  .balance-chip span:first-child { font-size: 12px; font-weight: 700; }
+  .balance-chip .balance-label { display: inline; font-size: 10px; }
   .logout-btn   { display: none !important; }
   .auth-nav-btn { font-size: 11px; padding: 5px 10px; }
-  .theme-toggle { width: 30px; height: 30px; font-size: 15px; flex-shrink: 0; }
+  .theme-toggle { width: 28px; height: 28px; font-size: 14px; flex-shrink: 0; }
 
   /* Push content below fixed navbar */
   #app { padding-top: 56px; }
