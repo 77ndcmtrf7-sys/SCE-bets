@@ -358,10 +358,9 @@ initSuggestions().then(async () => {
 // Submit suggestion
 app.post('/api/suggestions', async (req, res) => {
   try {
-    const { question, category, option_yes, option_no } = req.body;
+    const { question, category, option_yes, option_no, department, description } = req.body;
     if (!question || question.trim().length < 5)
       return res.status(400).json({ error: 'שאלה קצרה מדי' });
-    const { department } = req.body;
     const { is_draft } = req.body;
     await pool.query(
       'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username, is_draft, description) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',

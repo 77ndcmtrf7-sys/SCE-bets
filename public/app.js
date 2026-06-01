@@ -277,6 +277,7 @@ function renderMarkets(questions) {
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}">
       <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
+      ${q.description ? `<div class="card-description">${q.description}</div>` : ''}
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
       <div class="card-footer">
         <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
