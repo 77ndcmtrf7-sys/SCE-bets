@@ -1662,3 +1662,11 @@ body::after {
 
 /* הסרת card-bar-wrap (לא נחוץ יותר) */
 .card-bar-wrap { display: none; }
+
+/* ===== EDIT BUTTON ===== */
+.admin-q-btn.edit {
+  background: rgba(99,153,34,0.12);
+  color: #639922;
+  border: 1px solid rgba(99,153,34,0.3);
+}
+.admin-q-btn.edit:hover { background: rgba(99,153,34,0.22); }

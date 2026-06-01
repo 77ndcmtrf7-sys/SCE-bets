@@ -57,6 +57,7 @@ initDB().then(async () => {
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_count INTEGER DEFAULT 0"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS department TEXT DEFAULT ''"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''"); } catch(e) {}
+  try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''"); } catch(e) {}
   console.log('DB ready');
 }).catch(console.error);
 
@@ -363,8 +364,8 @@ app.post('/api/suggestions', async (req, res) => {
     const { department } = req.body;
     const { is_draft } = req.body;
     await pool.query(
-      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username, is_draft) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
-      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח', is_draft?1:0]
+      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username, is_draft, description) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח', is_draft?1:0, description||'']
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -553,6 +554,45 @@ app.get('/api/questions/:id/chart', async (req, res) => {
     }
 
     res.json({ points, option_yes: q.option_yes || 'כן', option_no: q.option_no || 'לא' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Edit suggestion ---
+app.put('/api/suggestions/:id', adminAuth, async (req, res) => {
+  try {
+    const { question, category, option_yes, option_no, department, description, deadline } = req.body;
+    await pool.query(
+      'UPDATE suggestions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6 WHERE id=$7',
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', req.params.id]
+    );
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Approve suggestion with edits (publish or draft) ---
+app.post('/api/suggestions/:id/approve-edited', adminAuth, async (req, res) => {
+  try {
+    const { question, category, option_yes, option_no, department, description, deadline, as_draft } = req.body;
+    const isDraft = as_draft === true;
+    const r = await pool.query(
+      'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by, is_draft) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
+      [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id, isDraft]
+    );
+    await pool.query('UPDATE suggestions SET approved=true WHERE id=$1', [req.params.id]);
+    if (!isDraft) logActivity('question', `סקר חדש פורסם: "${question}"`);
+    res.json({ id: r.rows[0].id, is_draft: isDraft });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Edit existing question ---
+app.put('/api/questions/:id', adminAuth, async (req, res) => {
+  try {
+    const { question, category, option_yes, option_no, department, description, deadline } = req.body;
+    await pool.query(
+      'UPDATE questions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7 WHERE id=$8',
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, req.params.id]
+    );
+    res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

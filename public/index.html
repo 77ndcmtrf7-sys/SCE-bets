@@ -274,6 +274,8 @@
         <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
         <option value="דימות רפואי">🩻 דימות רפואי</option>
       </select>
+      <label class="admin-date-label" style="padding-right:4px;">תיאור <span class="optional-tag">אופציונלי</span></label>
+      <textarea id="suggest-description" class="admin-input" placeholder="הקשר או פרטים נוספים..." rows="2" style="resize:vertical;"></textarea>
       <div class="bet-amount-row">
         <label>אפשרות א</label>
         <input type="text" id="suggest-opt-yes" placeholder='כן' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
@@ -354,5 +356,101 @@
 
 <div id="toast" class="toast"></div>
 <script src="app.js"></script>
+<!-- EDIT SUGGESTION MODAL -->
+<div id="edit-suggestion-modal" class="modal-overlay" onclick="closeEditSuggestionModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeEditSuggestionModal()">✕</button>
+    <div class="modal-category">עריכת הצעה</div>
+    <h2 id="edit-suggestion-title">עריכה</h2>
+    <input type="hidden" id="edit-suggestion-id" />
+    <div class="bet-controls">
+      <label class="admin-date-label">שאלה</label>
+      <input type="text" id="edit-suggestion-question" class="admin-input" />
+      <label class="admin-date-label">קטגוריה</label>
+      <select id="edit-suggestion-category" class="admin-input admin-select" onchange="toggleCustomCategory('edit-suggestion-category-custom', this)">
+        <option value="כללי">כללי</option>
+        <option value="הרצאות">הרצאות</option>
+        <option value="בחינות">בחינות</option>
+        <option value="קפיטריה">קפיטריה</option>
+        <option value="__custom__">אחר — כתוב בעצמך...</option>
+      </select>
+      <input type="text" id="edit-suggestion-category-custom" class="admin-input" placeholder="קטגוריה מותאמת אישית" style="display:none;margin-top:-4px;" />
+      <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
+      <select id="edit-suggestion-dept" class="admin-input admin-select">
+        <option value="">כללי / לכולם</option>
+        <option value="מכונות">⚙️ מכונות</option>
+        <option value="בניין">🏗️ בניין</option>
+        <option value="חשמל">⚡ חשמל</option>
+        <option value="תוכנה">💻 תוכנה</option>
+        <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
+        <option value="כימית">🧪 כימית</option>
+        <option value="אדריכלות">📐 אדריכלות</option>
+        <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
+        <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
+        <option value="דימות רפואי">🩻 דימות רפואי</option>
+      </select>
+      <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
+      <textarea id="edit-suggestion-description" class="admin-input" rows="2" style="resize:vertical;"></textarea>
+      <label class="admin-date-label">אפשרות א</label>
+      <input type="text" id="edit-suggestion-opt-yes" class="admin-input" />
+      <label class="admin-date-label">אפשרות ב</label>
+      <input type="text" id="edit-suggestion-opt-no" class="admin-input" />
+      <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
+      <input type="datetime-local" id="edit-suggestion-deadline" class="admin-input" />
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="admin-btn" onclick="publishEditedSuggestion()" style="flex:1;">פרסם עכשיו</button>
+        <button class="admin-btn" onclick="saveEditedSuggestionAsDraft()" style="flex:1;background:var(--bg4);color:var(--text);border:1px solid var(--border2);">שמור כטיוטה</button>
+      </div>
+    </div>
+    <div id="edit-suggestion-error" class="modal-error"></div>
+  </div>
+</div>
+
+<!-- EDIT QUESTION MODAL -->
+<div id="edit-question-modal" class="modal-overlay" onclick="closeEditQuestionModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeEditQuestionModal()">✕</button>
+    <div class="modal-category">עריכת סקר</div>
+    <input type="hidden" id="edit-question-id" />
+    <div class="bet-controls">
+      <label class="admin-date-label">שאלה</label>
+      <input type="text" id="edit-question-text" class="admin-input" />
+      <label class="admin-date-label">קטגוריה</label>
+      <select id="edit-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('edit-question-category-custom', this)">
+        <option value="כללי">כללי</option>
+        <option value="הרצאות">הרצאות</option>
+        <option value="בחינות">בחינות</option>
+        <option value="קפיטריה">קפיטריה</option>
+        <option value="__custom__">אחר — כתוב בעצמך...</option>
+      </select>
+      <input type="text" id="edit-question-category-custom" class="admin-input" placeholder="קטגוריה מותאמת אישית" style="display:none;margin-top:-4px;" />
+      <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
+      <select id="edit-question-dept" class="admin-input admin-select">
+        <option value="">כללי / לכולם</option>
+        <option value="מכונות">⚙️ מכונות</option>
+        <option value="בניין">🏗️ בניין</option>
+        <option value="חשמל">⚡ חשמל</option>
+        <option value="תוכנה">💻 תוכנה</option>
+        <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
+        <option value="כימית">🧪 כימית</option>
+        <option value="אדריכלות">📐 אדריכלות</option>
+        <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
+        <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
+        <option value="דימות רפואי">🩻 דימות רפואי</option>
+      </select>
+      <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
+      <textarea id="edit-question-description" class="admin-input" rows="2" style="resize:vertical;"></textarea>
+      <label class="admin-date-label">אפשרות א (כן)</label>
+      <input type="text" id="edit-question-opt-yes" class="admin-input" />
+      <label class="admin-date-label">אפשרות ב (לא)</label>
+      <input type="text" id="edit-question-opt-no" class="admin-input" />
+      <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
+      <input type="datetime-local" id="edit-question-deadline" class="admin-input" />
+      <button class="place-bet-btn" onclick="saveEditedQuestion()">שמור שינויים</button>
+    </div>
+    <div id="edit-question-error" class="modal-error"></div>
+  </div>
+</div>
+
 </body>
 </html>

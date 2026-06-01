@@ -517,6 +517,144 @@ function startCountdowns() {
   });
 }
 
+
+// ===== EDIT SUGGESTION MODAL =====
+function openEditSuggestionModal(s) {
+  document.getElementById('edit-suggestion-id').value       = s.id;
+  document.getElementById('edit-suggestion-question').value = s.question;
+  document.getElementById('edit-suggestion-description').value = s.description || '';
+  document.getElementById('edit-suggestion-opt-yes').value  = s.option_yes || 'כן';
+  document.getElementById('edit-suggestion-opt-no').value   = s.option_no  || 'לא';
+  document.getElementById('edit-suggestion-deadline').value = '';
+  // קטגוריה
+  const catSel = document.getElementById('edit-suggestion-category');
+  const standardCats = ['כללי','הרצאות','בחינות','קפיטריה'];
+  if (standardCats.includes(s.category)) {
+    catSel.value = s.category;
+    document.getElementById('edit-suggestion-category-custom').style.display = 'none';
+  } else {
+    catSel.value = '__custom__';
+    document.getElementById('edit-suggestion-category-custom').style.display = '';
+    document.getElementById('edit-suggestion-category-custom').value = s.category || '';
+  }
+  // מחלקה
+  document.getElementById('edit-suggestion-dept').value = s.department || '';
+  document.getElementById('edit-suggestion-error').textContent = '';
+  document.getElementById('edit-suggestion-modal').classList.add('open');
+}
+
+function closeEditSuggestionModal(e) {
+  if (e && e.target !== document.getElementById('edit-suggestion-modal')) return;
+  document.getElementById('edit-suggestion-modal').classList.remove('open');
+}
+
+function getEditSuggestionData() {
+  return {
+    id:          document.getElementById('edit-suggestion-id').value,
+    question:    document.getElementById('edit-suggestion-question').value.trim(),
+    category:    getCategory('edit-suggestion-category','edit-suggestion-category-custom'),
+    department:  document.getElementById('edit-suggestion-dept').value,
+    description: document.getElementById('edit-suggestion-description').value.trim(),
+    option_yes:  document.getElementById('edit-suggestion-opt-yes').value.trim() || 'כן',
+    option_no:   document.getElementById('edit-suggestion-opt-no').value.trim()  || 'לא',
+    deadline:    document.getElementById('edit-suggestion-deadline').value || null,
+  };
+}
+
+async function publishEditedSuggestion() {
+  const d = getEditSuggestionData();
+  const errEl = document.getElementById('edit-suggestion-error');
+  if (!d.question) { errEl.textContent = 'שאלה לא יכולה להיות ריקה'; return; }
+  const res = await fetch(`/api/suggestions/${d.id}/approve-edited`, {
+    method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...d, as_draft: false })
+  });
+  if (res.ok) {
+    document.getElementById('edit-suggestion-modal').classList.remove('open');
+    showToast('ההצעה אושרה ויצאה לאור 🎉', 'success');
+    loadAdminSuggestions(); loadAdminQuestions();
+  } else {
+    const err = await res.json();
+    errEl.textContent = err.error || 'שגיאה';
+  }
+}
+
+async function saveEditedSuggestionAsDraft() {
+  const d = getEditSuggestionData();
+  const errEl = document.getElementById('edit-suggestion-error');
+  if (!d.question) { errEl.textContent = 'שאלה לא יכולה להיות ריקה'; return; }
+  const res = await fetch(`/api/suggestions/${d.id}/approve-edited`, {
+    method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...d, as_draft: true })
+  });
+  if (res.ok) {
+    document.getElementById('edit-suggestion-modal').classList.remove('open');
+    showToast('נשמר כטיוטה — יום אחד אולי יצא לאור 📝', 'success');
+    loadAdminSuggestions(); loadAdminQuestions();
+  } else {
+    const err = await res.json();
+    errEl.textContent = err.error || 'שגיאה';
+  }
+}
+
+// ===== EDIT QUESTION MODAL =====
+function openEditQuestionModal(q) {
+  document.getElementById('edit-question-id').value          = q.id;
+  document.getElementById('edit-question-text').value        = q.question;
+  document.getElementById('edit-question-description').value = q.description || '';
+  document.getElementById('edit-question-opt-yes').value     = q.option_yes || 'כן';
+  document.getElementById('edit-question-opt-no').value      = q.option_no  || 'לא';
+  document.getElementById('edit-question-deadline').value    = q.deadline ? q.deadline.slice(0,16) : '';
+  // קטגוריה
+  const catSel = document.getElementById('edit-question-category');
+  const standardCats = ['כללי','הרצאות','בחינות','קפיטריה'];
+  if (standardCats.includes(q.category)) {
+    catSel.value = q.category;
+    document.getElementById('edit-question-category-custom').style.display = 'none';
+  } else {
+    catSel.value = '__custom__';
+    document.getElementById('edit-question-category-custom').style.display = '';
+    document.getElementById('edit-question-category-custom').value = q.category || '';
+  }
+  // מחלקה
+  document.getElementById('edit-question-dept').value = q.department || '';
+  document.getElementById('edit-question-error').textContent = '';
+  document.getElementById('edit-question-modal').classList.add('open');
+}
+
+function closeEditQuestionModal(e) {
+  if (e && e.target !== document.getElementById('edit-question-modal')) return;
+  document.getElementById('edit-question-modal').classList.remove('open');
+}
+
+async function saveEditedQuestion() {
+  const id          = document.getElementById('edit-question-id').value;
+  const question    = document.getElementById('edit-question-text').value.trim();
+  const category    = getCategory('edit-question-category','edit-question-category-custom');
+  const department  = document.getElementById('edit-question-dept').value;
+  const description = document.getElementById('edit-question-description').value.trim();
+  const option_yes  = document.getElementById('edit-question-opt-yes').value.trim() || 'כן';
+  const option_no   = document.getElementById('edit-question-opt-no').value.trim()  || 'לא';
+  const deadline    = document.getElementById('edit-question-deadline').value || null;
+  const errEl       = document.getElementById('edit-question-error');
+
+  if (!question) { errEl.textContent = 'שאלה לא יכולה להיות ריקה'; return; }
+
+  const res = await fetch(`/api/questions/${id}`, {
+    method: 'PUT', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, category, department, description, option_yes, option_no, deadline })
+  });
+
+  if (res.ok) {
+    document.getElementById('edit-question-modal').classList.remove('open');
+    showToast('הסקר עודכן ✓', 'success');
+    loadAdminQuestions(); loadMarkets();
+  } else {
+    const err = await res.json();
+    errEl.textContent = err.error || 'שגיאה';
+  }
+}
+
 // ===== CATEGORY HELPERS =====
 function toggleCustomCategory(customInputId, select) {
   const customInput = document.getElementById(customInputId);
@@ -557,6 +695,7 @@ function renderAdminQuestions(questions) {
       <div class="admin-q-text">${q.question}</div>
       <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${dl?` · סגירה: ${dl}`:''}  · ${q.resolved?`נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`:'פעיל'}</div>
       <div class="admin-q-actions">
+        <button class="admin-q-btn edit" onclick="openEditQuestionModal(${JSON.stringify(q).replace(/"/g,'&quot;')})">✏️ ערוך</button>
         ${!q.resolved?`
           <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
           <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`:''}
@@ -894,7 +1033,8 @@ function closeSuggestModal(e) {
 
 async function submitSuggestion() {
   const question   = document.getElementById('suggest-question').value.trim();
-  const category   = getCategory('suggest-category','suggest-category-custom');
+  const category    = getCategory('suggest-category','suggest-category-custom');
+  const description = document.getElementById('suggest-description')?.value.trim() || '';
   const option_yes = document.getElementById('suggest-opt-yes').value.trim();
   const option_no  = document.getElementById('suggest-opt-no').value.trim();
   const errEl      = document.getElementById('suggest-error');
@@ -908,11 +1048,12 @@ async function submitSuggestion() {
   const res = await fetch('/api/suggestions', {
     method: 'POST',
     headers: sugHeaders,
-    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'' })
+    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description })
   });
 
   if (res.ok) {
     document.getElementById('suggest-modal').classList.remove('open');
+    document.getElementById('suggest-description').value = '';
     showToast('ההצעה בדרך. המנהל יחליט את גורלה ⚖️', 'success');
   } else {
     const d = await res.json();
@@ -967,6 +1108,7 @@ function renderAdminSuggestions(suggestions) {
         · אפשרויות: ${s.option_yes} / ${s.option_no}
       </div>
       <div class="admin-q-actions">
+        <button class="admin-q-btn edit" onclick="openEditSuggestionModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">✏️ ערוך</button>
         <button class="admin-q-btn resolve-yes" onclick="approveSuggestion(${s.id})">✓ אשר וצור סקר</button>
         <button class="admin-q-btn delete" onclick="deleteSuggestion(${s.id})">✗ דחה</button>
       </div>
