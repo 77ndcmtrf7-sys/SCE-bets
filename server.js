@@ -574,8 +574,8 @@ app.post('/api/suggestions/:id/approve-edited', adminAuth, async (req, res) => {
     const { question, category, option_yes, option_no, department, description, deadline, as_draft } = req.body;
     const isDraft = as_draft === true;
     const r = await pool.query(
-      'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by, is_draft) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
-      [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id, isDraft]
+      'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+      [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id]
     );
     await pool.query('UPDATE suggestions SET approved=true WHERE id=$1', [req.params.id]);
     if (!isDraft) logActivity('question', `סקר חדש פורסם: "${question}"`);

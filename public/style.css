@@ -1701,3 +1701,42 @@ body::after {
   rows: 2;
   min-height: 52px;
 }
+
+/* ===== EDIT SUGGESTION MODAL — compact ===== */
+#edit-suggestion-modal .modal-box,
+#edit-question-modal .modal-box {
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 18px 18px 14px;
+}
+#edit-suggestion-modal .bet-controls,
+#edit-question-modal .bet-controls {
+  gap: 6px;
+}
+#edit-suggestion-modal .admin-input,
+#edit-suggestion-modal .admin-select,
+#edit-question-modal .admin-input,
+#edit-question-modal .admin-select {
+  padding: 8px 12px;
+  font-size: 13px;
+  margin-bottom: 0;
+}
+#edit-suggestion-modal .admin-date-label,
+#edit-question-modal .admin-date-label {
+  font-size: 11px;
+  margin-bottom: 2px;
+  margin-top: 2px;
+}
+#edit-suggestion-modal textarea.admin-input,
+#edit-question-modal textarea.admin-input {
+  min-height: 48px;
+  padding: 8px 12px;
+}
+#edit-suggestion-modal .modal-category,
+#edit-question-modal .modal-category {
+  margin-bottom: 4px;
+}
+#edit-suggestion-modal h2,
+#edit-question-modal h2 {
+  display: none;
+}

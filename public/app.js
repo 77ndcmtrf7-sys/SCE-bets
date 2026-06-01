@@ -520,6 +520,11 @@ function startCountdowns() {
 
 
 // ===== EDIT SUGGESTION MODAL =====
+function openEditSuggestionById(id) {
+  const s = _adminSuggestions.find(s => s.id === id);
+  if (s) openEditSuggestionModal(s);
+}
+
 function openEditSuggestionModal(s) {
   document.getElementById('edit-suggestion-id').value       = s.id;
   document.getElementById('edit-suggestion-question').value = s.question;
@@ -599,6 +604,11 @@ async function saveEditedSuggestionAsDraft() {
 }
 
 // ===== EDIT QUESTION MODAL =====
+function openEditQuestionById(id) {
+  const q = _adminQuestions.find(q => q.id === id);
+  if (q) openEditQuestionModal(q);
+}
+
 function openEditQuestionModal(q) {
   document.getElementById('edit-question-id').value          = q.id;
   document.getElementById('edit-question-text').value        = q.question;
@@ -686,7 +696,9 @@ async function loadAdminQuestions() {
   renderAdminQuestions(data.questions||[]);
 }
 
+let _adminQuestions = [];
 function renderAdminQuestions(questions) {
+  _adminQuestions = questions;
   const list=document.getElementById('admin-questions-list');
   if(!questions.length){list.innerHTML=`<div style="color:var(--text3);font-size:13px;">אין שאלות עדיין</div>`;return;}
   list.innerHTML=questions.map(q=>{
@@ -696,7 +708,7 @@ function renderAdminQuestions(questions) {
       <div class="admin-q-text">${q.question}</div>
       <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${dl?` · סגירה: ${dl}`:''}  · ${q.resolved?`נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`:'פעיל'}</div>
       <div class="admin-q-actions">
-        <button class="admin-q-btn edit" onclick="openEditQuestionModal(${JSON.stringify(q).replace(/"/g,'&quot;')})">✏️ ערוך</button>
+        <button class="admin-q-btn edit" onclick="openEditQuestionById(${q.id})">✏️ ערוך</button>
         ${!q.resolved?`
           <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
           <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`:''}
@@ -1089,7 +1101,9 @@ async function loadAdminSuggestions() {
   // badge is handled in renderAdminSuggestions
 }
 
+let _adminSuggestions = [];
 function renderAdminSuggestions(suggestions) {
+  _adminSuggestions = suggestions;
   const badge = document.getElementById('suggestions-badge');
   if (badge) {
     if (suggestions.length > 0) { badge.textContent = suggestions.length; badge.style.display = 'inline'; }
@@ -1109,7 +1123,7 @@ function renderAdminSuggestions(suggestions) {
         · אפשרויות: ${s.option_yes} / ${s.option_no}
       </div>
       <div class="admin-q-actions">
-        <button class="admin-q-btn edit" onclick="openEditSuggestionModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">✏️ ערוך</button>
+        <button class="admin-q-btn edit" onclick="openEditSuggestionById(${s.id})">✏️ ערוך</button>
         <button class="admin-q-btn resolve-yes" onclick="approveSuggestion(${s.id})">✓ אשר וצור סקר</button>
         <button class="admin-q-btn delete" onclick="deleteSuggestion(${s.id})">✗ דחה</button>
       </div>
