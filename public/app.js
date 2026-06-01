@@ -281,7 +281,7 @@ function renderMarkets(questions) {
       : q.description.split('\n')[0] + (q.description.includes('\n') || q.description.length > 80 ? '...' : '')
     ) : '';
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${cardBorderStyle} ${!q.resolved && currentUser ? `onclick="openBetModal(${q.id})"` : !q.resolved ? `onclick="showAuthOverlay()"` : ''}>
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" data-qid="${q.id}" data-resolved="${q.resolved?1:0}" ${cardBorderStyle}>
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
       ${shortDesc ? `<div class="card-description">${shortDesc}</div>` : ''}
@@ -301,6 +301,19 @@ function renderMarkets(questions) {
     </div>`;
   }).join('');
   startCountdowns();
+  // event delegation — לחיצה על כרטיס
+  const gridEl = document.getElementById('markets-grid');
+  gridEl.onclick = (e) => {
+    const card = e.target.closest('.market-card');
+    if (!card) return;
+    // אל תפתח modal אם לחצו על choice-block
+    if (e.target.closest('.choice-block')) return;
+    if (card.dataset.resolved === '1') return;
+    const qid = parseInt(card.dataset.qid);
+    if (!qid) return;
+    if (currentUser) openBetModal(qid);
+    else showAuthOverlay();
+  };
   // אנימציית כניסה לכרטיסים
   requestAnimationFrame(() => {
     document.querySelectorAll('.market-card').forEach((card, i) => {
