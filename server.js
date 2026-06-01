@@ -573,14 +573,27 @@ app.put('/api/suggestions/:id', adminAuth, async (req, res) => {
 app.post('/api/suggestions/:id/approve-edited', adminAuth, async (req, res) => {
   try {
     const { question, category, option_yes, option_no, department, description, deadline, as_draft } = req.body;
-    const isDraft = as_draft === true ? 1 : 0;
-    const r = await pool.query(
-      'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
-      [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id]
+
+    // עדכון ההצעה עם הנתונים החדשים
+    await pool.query(
+      'UPDATE suggestions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7 WHERE id=$8',
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, req.params.id]
     );
-    await pool.query('UPDATE suggestions SET approved=1 WHERE id=$1', [req.params.id]);
-    if (!isDraft) logActivity('question', `סקר חדש פורסם: "${question}"`);
-    res.json({ id: r.rows[0].id, is_draft: isDraft });
+
+    if (as_draft === true) {
+      // שמור כטיוטה — ה-suggestion נשאר עם is_draft=1
+      await pool.query('UPDATE suggestions SET is_draft=1, approved=0 WHERE id=$1', [req.params.id]);
+      res.json({ success: true, is_draft: true });
+    } else {
+      // פרסם — יצירת שאלה חדשה ומחיקת ה-suggestion
+      const r = await pool.query(
+        'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+        [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id]
+      );
+      await pool.query('UPDATE suggestions SET approved=1 WHERE id=$1', [req.params.id]);
+      logActivity('question', `סקר חדש פורסם: "${question}"`);
+      res.json({ id: r.rows[0].id, is_draft: false });
+    }
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

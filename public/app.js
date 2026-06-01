@@ -758,7 +758,13 @@ async function createQuestion(asDraft = false) {
     // Save as suggestion (draft)
     const suggestHeaders = { 'Content-Type': 'application/json', ...authHeaders() };
     const res2 = await fetch('/api/suggestions', { method:'POST', headers: suggestHeaders,
-      body: JSON.stringify({ question:text, category:category||'כללי', option_yes:optYes||'כן', option_no:optNo||'לא', department:dept||'', is_draft:true })
+      body: JSON.stringify({
+        question: text, category: category||'כללי',
+        option_yes: optYes||'כן', option_no: optNo||'לא',
+        department: dept||'', is_draft: true,
+        description: document.getElementById('new-question-description')?.value.trim() || '',
+        deadline: deadline || null
+      })
     });
     if (res2.ok) {
       document.getElementById('new-question-text').value='';
