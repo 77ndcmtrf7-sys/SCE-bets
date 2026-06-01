@@ -274,7 +274,7 @@ function renderMarkets(questions) {
       <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
 
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||\'\'}" onclick="openDetailModal(${q.id})">
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" onclick="openDetailModal(${q.id})">
       <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
