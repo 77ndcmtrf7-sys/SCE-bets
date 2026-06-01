@@ -1770,3 +1770,20 @@ body::after {
   margin: 0;
   overflow: hidden;
 }
+
+/* ===== MODAL DESCRIPTION ===== */
+.modal-description {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border-radius: 10px;
+  border-right: 3px solid var(--accent-start);
+}
+
+/* כרטיס לחיץ */
+.market-card:not(.resolved) {
+  cursor: pointer;
+}

@@ -276,11 +276,15 @@ function renderMarkets(questions) {
     const catColor = getCategoryColor(q.category);
     const catStyle = catColor ? `style="color:${catColor}"` : '';
     const cardBorderStyle = catColor ? `style="border-top-color:${catColor}"` : '';
+    const shortDesc = q.description ? (q.description.split('\n')[0].length > 80
+      ? q.description.split('\n')[0].slice(0,80) + '...'
+      : q.description.split('\n')[0] + (q.description.includes('\n') || q.description.length > 80 ? '...' : '')
+    ) : '';
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${cardBorderStyle}>
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${cardBorderStyle} ${!q.resolved && currentUser ? `onclick="openBetModal(${q.id})"` : !q.resolved ? `onclick="showAuthOverlay()"` : ''}>
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
-      ${q.description ? `<div class="card-description">${q.description}</div>` : ''}
+      ${shortDesc ? `<div class="card-description">${shortDesc}</div>` : ''}
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
       <div class="card-footer">
         <div class="card-footer-top">
@@ -349,8 +353,21 @@ async function openBetModal(questionId,choice='YES') {
   const data = await res.json();
   if (!res.ok) return;
   currentBetQuestion=data.question; currentBetChoice=choice;
-  document.getElementById('modal-category-tag').textContent  = data.question.category||'';
+  const catColor = getCategoryColor(data.question.category);
+  const catTagEl = document.getElementById('modal-category-tag');
+  catTagEl.textContent = data.question.category || '';
+  catTagEl.style.color = catColor || '';
   document.getElementById('modal-question-text').textContent = data.question.question;
+  // תיאור מלא
+  const modalDescEl = document.getElementById('modal-description');
+  if (modalDescEl) {
+    if (data.question.description) {
+      modalDescEl.textContent = data.question.description;
+      modalDescEl.style.display = '';
+    } else {
+      modalDescEl.style.display = 'none';
+    }
+  }
   document.getElementById('modal-error').textContent = '';
   const optYes = data.question.option_yes || 'כן';
   const optNo  = data.question.option_no  || 'לא';
