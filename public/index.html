@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -202,6 +203,8 @@
           <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
           <option value="דימות רפואי">🩻 דימות רפואי</option>
         </select>
+        <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
+        <textarea id="new-question-description" class="admin-input" placeholder="הוסף הקשר או פרטים נוספים על הסקר..." rows="2" style="resize:vertical;"></textarea>
         <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
         <input type="datetime-local" id="new-question-deadline" class="admin-input" />
         <label class="admin-date-label">אפשרויות בחירה</label>
@@ -352,5 +355,28 @@
 
 <div id="toast" class="toast"></div>
 <script src="app.js"></script>
+<!-- QUESTION DETAIL MODAL -->
+<div id="detail-modal" class="modal-overlay" onclick="closeDetailModal(event)">
+  <div class="modal-box detail-modal-box">
+    <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    <div class="detail-header">
+      <div class="detail-tags">
+        <span class="modal-category" id="detail-category"></span>
+        <span class="dept-tag" id="detail-dept" style="display:none"></span>
+      </div>
+      <h2 id="detail-question"></h2>
+      <p id="detail-description" class="detail-description" style="display:none"></p>
+    </div>
+    <div class="detail-chart-wrap">
+      <canvas id="detail-chart" height="160"></canvas>
+    </div>
+    <div class="detail-choice-blocks" id="detail-choice-blocks"></div>
+    <div class="detail-footer">
+      <span class="card-volume">נפח: <span id="detail-volume">—</span> נק"ז</span>
+      <span class="card-stats-row" id="detail-stats" dir="ltr"></span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

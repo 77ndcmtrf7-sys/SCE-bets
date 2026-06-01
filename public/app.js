@@ -274,7 +274,7 @@ function renderMarkets(questions) {
       <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
 
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}">
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||\'\'}" onclick="openDetailModal(${q.id})">
       <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
@@ -303,6 +303,172 @@ function renderMarkets(questions) {
       }, i * 60);
     });
   });
+}
+
+
+// ===== DETAIL MODAL =====
+let detailChartInstance = null;
+
+async function openDetailModal(questionId) {
+  const [qRes, chartRes] = await Promise.all([
+    fetch(`${API}/api/questions/${questionId}`, { headers: authHeaders() }),
+    fetch(`${API}/api/questions/${questionId}/chart`, { headers: authHeaders() })
+  ]);
+  const qData     = await qRes.json();
+  const chartData = await chartRes.json();
+  if (!qRes.ok) return;
+
+  const q     = qData.question;
+  const total = q.yes_volume + q.no_volume;
+  const yesPct = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
+  const noPct  = 100 - yesPct;
+
+  // header
+  document.getElementById('detail-category').textContent = q.category || 'כללי';
+  document.getElementById('detail-question').textContent = q.question;
+  const deptEl = document.getElementById('detail-dept');
+  if (q.department) { deptEl.textContent = q.department; deptEl.style.display = ''; }
+  else deptEl.style.display = 'none';
+  const descEl = document.getElementById('detail-description');
+  if (q.description) { descEl.textContent = q.description; descEl.style.display = ''; }
+  else descEl.style.display = 'none';
+
+  // נפח + bets
+  document.getElementById('detail-volume').textContent = formatNum(total);
+  document.getElementById('detail-stats').innerHTML =
+    `<span class="stat-yes">${q.yes_count||0}</span><span class="stat-mid">vs</span><span class="stat-no">${q.no_count||0}</span><span class="stat-label">bets</span>`;
+
+  // choice blocks
+  const blocksEl = document.getElementById('detail-choice-blocks');
+  if (q.resolved) {
+    blocksEl.innerHTML = `
+      <div class="choice-blocks">
+        <div class="choice-block yes-block ${q.result==='YES'?'winner':'loser'}">
+          <span class="choice-pct">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </div>
+        <div class="choice-block no-block ${q.result==='NO'?'winner':'loser'}">
+          <span class="choice-pct">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </div>
+      </div>
+      <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
+  } else if (currentUser) {
+    blocksEl.innerHTML = `
+      <div class="choice-blocks">
+        <button class="choice-block yes-block" onclick="closeDetailModal();openBetModal(${q.id},'YES')">
+          <span class="choice-pct">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </button>
+        <button class="choice-block no-block" onclick="closeDetailModal();openBetModal(${q.id},'NO')">
+          <span class="choice-pct">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </button>
+      </div>`;
+  } else {
+    blocksEl.innerHTML = `
+      <div class="choice-blocks">
+        <button class="choice-block yes-block" onclick="guestVote(${q.id},'YES',this)">
+          <span class="choice-pct">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </button>
+        <button class="choice-block no-block" onclick="guestVote(${q.id},'NO',this)">
+          <span class="choice-pct">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </button>
+      </div>`;
+  }
+
+  // גרף
+  buildDetailChart(chartData);
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function buildDetailChart(data) {
+  const ctx = document.getElementById('detail-chart').getContext('2d');
+  if (detailChartInstance) { detailChartInstance.destroy(); detailChartInstance = null; }
+
+  const points = data.points || [];
+  if (points.length < 2) {
+    ctx.canvas.style.display = 'none';
+    return;
+  }
+  ctx.canvas.style.display = '';
+
+  const labels = points.map(p => {
+    const d = new Date(p.time);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  });
+
+  const isDark = document.documentElement.classList.contains('dark') ||
+    document.body.classList.contains('dark') ||
+    document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
+  const labelColor = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
+
+  detailChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: data.option_yes || 'כן',
+          data: points.map(p => p.yes),
+          borderColor: '#22d98a',
+          backgroundColor: 'rgba(34,217,138,0.08)',
+          borderWidth: 2.5,
+          pointRadius: points.length < 15 ? 4 : 2,
+          pointBackgroundColor: '#22d98a',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: data.option_no || 'לא',
+          data: points.map(p => p.no),
+          borderColor: '#ff3b30',
+          backgroundColor: 'rgba(255,59,48,0.08)',
+          borderWidth: 2.5,
+          pointRadius: points.length < 15 ? 4 : 2,
+          pointBackgroundColor: '#ff3b30',
+          tension: 0.4,
+          fill: true,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: { color: labelColor, font: { family: 'Rubik', size: 12 }, boxWidth: 12, padding: 12 }
+        },
+        tooltip: {
+          rtl: true,
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%` }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: labelColor, font: { family: 'Rubik', size: 10 }, maxTicksLimit: 6, maxRotation: 0 },
+          grid: { color: gridColor }
+        },
+        y: {
+          min: 0, max: 100,
+          ticks: { color: labelColor, font: { family: 'Rubik', size: 11 }, callback: v => v + '%', stepSize: 25 },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+}
+
+function closeDetailModal(e) {
+  if (e && e.target !== document.getElementById('detail-modal')) return;
+  document.getElementById('detail-modal').classList.remove('open');
+  if (detailChartInstance) { detailChartInstance.destroy(); detailChartInstance = null; }
 }
 
 // ===== ANIMATE PCT UPDATE =====
@@ -584,6 +750,8 @@ async function createQuestion(asDraft = false) {
       document.getElementById('new-question-category').value='כללי';
     document.getElementById('new-question-category-custom').value='';
     document.getElementById('new-question-category-custom').style.display='none';
+    const descEl = document.getElementById('new-question-description');
+    if (descEl) descEl.value = '';
       document.getElementById('new-question-deadline').value='';
       document.getElementById('new-option-yes').value='';
       document.getElementById('new-option-no').value='';
@@ -593,7 +761,8 @@ async function createQuestion(asDraft = false) {
     }
     return;
   }
-  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||''})});
+  const descVal = document.getElementById('new-question-description')?.value.trim() || '';
+  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||'',description:descVal})});
   if(res.ok){
     document.getElementById('new-question-text').value='';
     document.getElementById('new-question-category').value='כללי';

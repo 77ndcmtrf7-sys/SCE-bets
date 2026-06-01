@@ -56,6 +56,7 @@ initDB().then(async () => {
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS yes_count INTEGER DEFAULT 0"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_count INTEGER DEFAULT 0"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS department TEXT DEFAULT ''"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''"); } catch(e) {}
   console.log('DB ready');
 }).catch(console.error);
 
@@ -161,11 +162,11 @@ app.get('/api/questions/:id', auth, async (req, res) => {
 
 app.post('/api/questions', adminAuth, async (req, res) => {
   try {
-    const { question, category, deadline, option_yes, option_no } = req.body;
+    const { question, category, deadline, option_yes, option_no, description } = req.body;
     if (!question) return res.status(400).json({ error: 'חסר טקסט שאלה' });
     const r = await pool.query(
-      'INSERT INTO questions (question, category, deadline, option_yes, option_no, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
-      [question, category || 'כללי', deadline || null, option_yes || 'כן', option_no || 'לא', req.user.id]
+      'INSERT INTO questions (question, category, deadline, option_yes, option_no, created_by, description) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id',
+      [question, category || 'כללי', deadline || null, option_yes || 'כן', option_no || 'לא', req.user.id, description || '']
     );
     logActivity('question', `סקר חדש פורסם: "${question}"`);
     res.json({ id: r.rows[0].id });
@@ -447,7 +448,8 @@ app.post('/api/guest-vote', async (req, res) => {
       await pool.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [GUEST_WEIGHT, question_id]);
     }
 
-    logActivity('guest_vote', `אורח הצביע על "${q.rows[0].question}"`);
+    const choiceLabelGuest = choice === 'YES' ? (q.rows[0].option_yes || 'כן') : (q.rows[0].option_no || 'לא');
+    logActivity('guest_vote', `אורח הצביע על "${q.rows[0].question}" — ${choiceLabelGuest}`);
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -489,6 +491,68 @@ app.post('/api/me/update', auth, async (req, res) => {
       logActivity('rename', `${req.user.display_name} שינה שם ל-${display_name}`);
     }
     res.json({ display_name: rows[0].display_name });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Question chart data from activity_log ---
+app.get('/api/questions/:id/chart', async (req, res) => {
+  try {
+    const qid = req.params.id;
+    const { rows: qRows } = await pool.query('SELECT * FROM questions WHERE id=$1', [qid]);
+    if (!qRows[0]) return res.status(404).json({ error: 'לא נמצא' });
+    const q = qRows[0];
+
+    // שליפת כל הימורים מה-log
+    const { rows: logs } = await pool.query(
+      `SELECT message, created_at FROM activity_log
+       WHERE (type='bet' OR type='guest_vote')
+         AND message LIKE $1
+       ORDER BY created_at ASC`,
+      [`%"${q.question}"%`]
+    );
+
+    // שחזור האחוזים לאורך זמן
+    let yesVol = 0, noVol = 0;
+    const points = [];
+
+    for (const log of logs) {
+      const msg = log.message;
+      // זיהוי צד
+      const isYes = msg.includes(`— ${q.option_yes || 'כן'}`);
+      const isNo  = msg.includes(`— ${q.option_no  || 'לא'}`);
+      if (!isYes && !isNo) continue;
+
+      // חילוץ סכום (רק הימורים רשומים, לא אורחים)
+      const amountMatch = msg.match(/הימר ([\d,]+) נק/);
+      const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g,'')) : 50;
+
+      if (isYes) yesVol += amount;
+      else       noVol  += amount;
+
+      const total = yesVol + noVol;
+      points.push({
+        time: log.created_at,
+        yes:  total > 0 ? Math.round((yesVol / total) * 100) : 50,
+        no:   total > 0 ? Math.round((noVol  / total) * 100) : 50,
+      });
+    }
+
+    // נקודת התחלה
+    if (points.length > 0) {
+      points.unshift({ time: q.created_at, yes: 50, no: 50 });
+    }
+
+    // נקודת סיום (מצב נוכחי)
+    const curTotal = q.yes_volume + q.no_volume;
+    if (points.length > 0) {
+      points.push({
+        time: q.resolved ? (points[points.length-1]?.time || q.created_at) : new Date().toISOString(),
+        yes:  curTotal > 0 ? Math.round((q.yes_volume / curTotal) * 100) : 50,
+        no:   curTotal > 0 ? Math.round((q.no_volume  / curTotal) * 100) : 50,
+      });
+    }
+
+    res.json({ points, option_yes: q.option_yes || 'כן', option_no: q.option_no || 'לא' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
