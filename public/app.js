@@ -273,19 +273,24 @@ function renderMarkets(questions) {
       </div>
       <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
 
+    const catColor = getCategoryColor(q.category);
+    const catStyle = catColor ? `style="color:${catColor}"` : '';
+    const cardBorderStyle = catColor ? `style="border-top-color:${catColor}"` : '';
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}">
-      <div class="card-tags-row">${deptTag}<span class="card-category">${q.category||'כללי'}</span></div>
+    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" ${cardBorderStyle}>
+      <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
       ${q.description ? `<div class="card-description">${q.description}</div>` : ''}
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
       <div class="card-footer">
-        <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
-        <div class="card-stats-row" dir="ltr">
-          <span class="stat-yes">${q.yes_count||0}</span>
-          <span class="stat-mid">vs</span>
-          <span class="stat-no">${q.no_count||0}</span>
-          <span class="stat-label">bets</span>
+        <div class="card-footer-top">
+          <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
+          <div class="card-stats-row" dir="ltr">
+            <span class="stat-yes">${q.yes_count||0}</span>
+            <span class="stat-mid">vs</span>
+            <span class="stat-no">${q.no_count||0}</span>
+            <span class="stat-label">bets</span>
+          </div>
         </div>
         ${dlHtml}
       </div>
@@ -531,7 +536,7 @@ function openEditSuggestionModal(s) {
   document.getElementById('edit-suggestion-description').value = s.description || '';
   document.getElementById('edit-suggestion-opt-yes').value  = s.option_yes || 'כן';
   document.getElementById('edit-suggestion-opt-no').value   = s.option_no  || 'לא';
-  document.getElementById('edit-suggestion-deadline').value = '';
+  document.getElementById('edit-suggestion-deadline').value = s.deadline ? s.deadline.slice(0,16) : '';
   // קטגוריה
   const catSel = document.getElementById('edit-suggestion-category');
   const standardCats = ['כללי','הרצאות','בחינות','קפיטריה'];
@@ -664,6 +669,29 @@ async function saveEditedQuestion() {
     const err = await res.json();
     errEl.textContent = err.error || 'שגיאה';
   }
+}
+
+
+// ===== CUSTOM CATEGORY COLORS =====
+const CUSTOM_CAT_PALETTE = [
+  '#7c6af7', // סגול
+  '#3b9ede', // כחול
+  '#e8874a', // כתום
+  '#22b8a0', // טורקיז
+  '#d4627a', // ורוד כהה
+  '#8fb844', // ירוק זית
+  '#c471ed', // סגול בהיר
+  '#4ecdc4', // מנטה
+];
+
+function getCategoryColor(cat) {
+  if (!cat) return null;
+  const fixed = { 'הרצאות': '#f0b429', 'בחינות': '#f05252', 'קפיטריה': '#22d98a', 'כללי': '#ff6eb4' };
+  if (cat in fixed) return fixed[cat];
+  // צבע רנדומלי אבל עקבי לפי שם הקטגוריה
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
+  return CUSTOM_CAT_PALETTE[Math.abs(hash) % CUSTOM_CAT_PALETTE.length];
 }
 
 // ===== CATEGORY HELPERS =====
@@ -1061,12 +1089,13 @@ async function submitSuggestion() {
   const res = await fetch('/api/suggestions', {
     method: 'POST',
     headers: sugHeaders,
-    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description })
+    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description, deadline: document.getElementById('suggest-deadline')?.value || null })
   });
 
   if (res.ok) {
     document.getElementById('suggest-modal').classList.remove('open');
     document.getElementById('suggest-description').value = '';
+    const sdl = document.getElementById('suggest-deadline'); if(sdl) sdl.value='';
     showToast('ההצעה בדרך. המנהל יחליט את גורלה ⚖️', 'success');
   } else {
     const d = await res.json();

@@ -1018,7 +1018,7 @@ body::after {
 }
 
 /* ===== CATEGORY TAG COLORS ===== */
-.card-category { color: #ff6eb4; }
+/* צבע קטגוריה מוגדר inline ע"י JS — לא מגדירים כאן */
 .complaint-author { color: #ff6eb4; }
 .p-status.open { background: rgba(255,110,180,0.1); color: #ff6eb4; }
 .lb-you { color: #ff6eb4; }
@@ -1739,4 +1739,34 @@ body::after {
 #edit-suggestion-modal h2,
 #edit-question-modal h2 {
   display: none;
+}
+
+.card-footer { display:block; }
+.card-footer-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+
+/* ===== CARD FOOTER LAYOUT ===== */
+.card-deadline {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+  display: block;
+}
+
+/* תיקון hover על קטגוריה — שמירת color inline */
+.card-category {
+  transition: none !important;
+}
+.market-card:hover .card-category {
+  /* לא לאפס color שהוגדר inline */
+  color: inherit;
+}
+
+/* custom category input — לא גורם לגלילה */
+#edit-suggestion-modal .admin-input[style*="display:none"],
+#edit-question-modal .admin-input[style*="display:none"] {
+  display: none !important;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
