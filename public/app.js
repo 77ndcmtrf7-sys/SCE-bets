@@ -280,6 +280,12 @@ function renderMarkets(questions) {
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
       <div class="card-footer">
         <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
+        <div class="card-stats-row" dir="ltr">
+          <span class="stat-yes">${q.yes_count||0}</span>
+          <span class="stat-mid">vs</span>
+          <span class="stat-no">${q.no_count||0}</span>
+          <span class="stat-label">bets</span>
+        </div>
         ${dlHtml}
       </div>
     </div>`;
