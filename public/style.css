@@ -373,8 +373,8 @@ body::after {
     gap: 5px;
     flex-shrink: 0;
   }
-  .user-chip {
-    display: block !important;
+  .user-chip:not([style*="display:none"]) {
+    display: block;
     font-size: 14px;
     max-width: 80px;
     overflow: hidden;
@@ -384,7 +384,7 @@ body::after {
   /* שמאל: יתרה — מוסתר, מוחלף ע"י מובייל-בלבד */
   .balance-chip   { display: none !important; }
   .logout-btn     { display: none !important; }
-  .auth-nav-btn   { font-size: 11px; padding: 5px 10px; }
+  .auth-nav-btn   { font-size: 11px; padding: 5px 10px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .theme-toggle   { width: 34px; height: 34px; font-size: 18px; }
 
   /* Push content below fixed navbar */
