@@ -84,6 +84,9 @@
     <button class="mobile-tab" onclick="showSection('portfolio',this);setMobileTab(this)">
       <span class="mtab-icon">📋</span>שלי
     </button>
+    <button class="mobile-tab" onclick="showSection('archive',this);setMobileTab(this)">
+      <span class="mtab-icon">🗂️</span>ארכיון
+    </button>
     <button class="mobile-tab" onclick="showSection('leaderboard',this);setMobileTab(this)">
       <span class="mtab-icon">🏆</span>טבלה
     </button>
@@ -323,6 +326,7 @@
       <button class="place-bet-btn" onclick="saveProfile()">שמור שינויים</button>
     </div>
     <div id="profile-error" class="modal-error"></div>
+    <button class="profile-logout-mobile" onclick="logout();closeProfileModal()">התנתק 👋</button>
   </div>
 </div>
 
