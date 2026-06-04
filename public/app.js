@@ -1094,7 +1094,8 @@ function renderComplaints(complaints) {
       ? '★'.repeat(c.rating) + '☆'.repeat(10 - c.rating)
       : '☆☆☆☆☆☆☆☆☆☆';
     const lowClass = c.rating <= 3 ? 'low' : '';
-    const date = new Date(c.created_at).toLocaleDateString('he-IL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    const _cDate = new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z');
+    const date = _cDate.toLocaleDateString('he-IL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem' });
     return `
     <div class="complaint-item">
       <div class="complaint-item-header">
@@ -1304,16 +1305,19 @@ function filterActivity(type, btn) {
 }
 
 function formatActivityTime(dateStr) {
-  const d = new Date(dateStr);
+  if (!dateStr) return '';
+  const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
   if (isNaN(d)) return '';
+  const opts = { timeZone: 'Asia/Jerusalem' };
   const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
+  const todayStr = now.toLocaleDateString('he-IL', opts);
+  const dStr    = d.toLocaleDateString('he-IL', opts);
+  const hh = String(d.toLocaleTimeString('he-IL', { ...opts, hour:'2-digit', hour12:false }).slice(0,2)).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
   const timeStr = `${hh}:${mm}`;
-  if (isToday) return `היום ${timeStr}`;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  if (todayStr === dStr) return `היום ${timeStr}`;
+  const dd = String(d.toLocaleDateString('he-IL', { ...opts, day:'2-digit' })).padStart(2,'0');
+  const mo = String(d.toLocaleDateString('he-IL', { ...opts, month:'2-digit' })).padStart(2,'0');
   return `${dd}/${mo} ${timeStr}`;
 }
 
