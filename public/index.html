@@ -57,6 +57,7 @@
       <button class="nav-tab" onclick="showSection('portfolio',this)">ההימורים שלי</button>
       <button class="nav-tab" onclick="showSection('leaderboard',this)">הטופ של הטופ</button>
       <button class="nav-tab" onclick="showSection('complaints',this)">בקשות סטודנט</button>
+      <button class="nav-tab" onclick="showSection('archive',this)">ארכיון</button>
       <button class="nav-tab" id="admin-tab" onclick="showSection('admin',this)" style="display:none">משרד הדיקן</button>
     </div>
     <div class="nav-balance-mobile" id="nav-balance-mobile-wrap" style="display:none">
@@ -113,6 +114,14 @@
     <div class="suggest-btn-wrap">
       <button class="suggest-pill-btn" onclick="openSuggestModal()">+ הצע סקר</button>
     </div>
+  </section>
+
+  <section id="section-archive" class="section">
+    <div class="section-header">
+      <h1>ארכיון סקרים</h1>
+      <p class="section-sub">סקרים שנסגרו — ההיסטוריה לא משקרת 📜</p>
+    </div>
+    <div id="archive-grid" class="markets-grid"></div>
   </section>
 
   <section id="section-portfolio" class="section">

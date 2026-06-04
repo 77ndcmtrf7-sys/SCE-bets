@@ -57,6 +57,7 @@ initDB().then(async () => {
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_count INTEGER DEFAULT 0"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS department TEXT DEFAULT ''"); } catch(e) {}
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ"); } catch(e) {}
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''"); } catch(e) {}
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS deadline TEXT DEFAULT NULL"); } catch(e) {}
   console.log('DB ready');
@@ -148,7 +149,10 @@ app.get('/api/questions', async (req, res) => {
     const showAll = req.query.all && req.user?.is_admin;
     const sql = showAll
       ? 'SELECT * FROM questions ORDER BY created_at DESC'
-      : 'SELECT * FROM questions ORDER BY resolved ASC, created_at DESC';
+      : `SELECT * FROM questions
+         WHERE resolved = 0
+            OR (resolved = 1 AND (resolved_at IS NULL OR resolved_at > NOW() - INTERVAL '24 hours'))
+         ORDER BY resolved ASC, created_at DESC`;
     const { rows } = await pool.query(sql);
     res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -212,7 +216,7 @@ app.post('/api/questions/:id/resolve', adminAuth, async (req, res) => {
     if (qRows[0].resolved) return res.status(400).json({ error: 'כבר נסגרה' });
 
     await client.query('BEGIN');
-    await client.query('UPDATE questions SET resolved = 1, result = $1 WHERE id = $2', [result, qRows[0].id]);
+    await client.query('UPDATE questions SET resolved = 1, result = $1, resolved_at = NOW() WHERE id = $2', [result, qRows[0].id]);
 
     const { rows: winBets }  = await client.query('SELECT * FROM bets WHERE question_id = $1 AND choice = $2', [qRows[0].id, result]);
     const { rows: loseBets } = await client.query('SELECT * FROM bets WHERE question_id = $1 AND choice != $2', [qRows[0].id, result]);
@@ -606,6 +610,19 @@ app.put('/api/questions/:id', adminAuth, async (req, res) => {
       [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, req.params.id]
     );
     res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Archive endpoint ---
+app.get('/api/archive', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT * FROM questions
+      WHERE resolved = 1
+        AND resolved_at < NOW() - INTERVAL '24 hours'
+      ORDER BY resolved_at DESC
+    `);
+    res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

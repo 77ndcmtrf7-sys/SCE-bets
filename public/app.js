@@ -449,6 +449,58 @@ async function placeBet() {
 
 function setModalError(msg) { document.getElementById('modal-error').textContent=msg; }
 
+// ===== ARCHIVE =====
+async function loadArchive() {
+  const res  = await fetch('/api/archive', { headers: authHeaders() });
+  const data = await res.json();
+  renderArchive(data.questions || []);
+}
+
+function renderArchive(questions) {
+  const grid = document.getElementById('archive-grid');
+  if (!questions.length) {
+    grid.innerHTML = '<div class="empty-state">אין סקרים בארכיון עדיין 📭</div>';
+    return;
+  }
+  grid.innerHTML = questions.map(q => {
+    const total  = q.yes_volume + q.no_volume;
+    const yesPct = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
+    const noPct  = 100 - yesPct;
+    const catColor = getCategoryColor(q.category);
+    const catStyle = catColor ? `style="color:${catColor}"` : '';
+    const cardBorderStyle = catColor ? `style="border-top-color:${catColor}"` : '';
+    const deptTag = q.department ? `<span class="dept-tag">${q.department}</span>` : '';
+    const winnerYes = q.result === 'YES';
+    return `
+    <div class="market-card resolved" data-cat="${q.category||'כללי'}" ${cardBorderStyle}>
+      <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
+      <div class="card-question">${q.question}</div>
+      <div class="choice-blocks">
+        <div class="choice-block yes-block ${winnerYes?'winner':'loser'}">
+          <span class="choice-pct">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </div>
+        <div class="choice-block no-block ${!winnerYes?'winner':'loser'}">
+          <span class="choice-pct">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </div>
+      </div>
+      <div class="resolved-badge ${q.result}">${winnerYes?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>
+      <div class="card-footer">
+        <div class="card-footer-top">
+          <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
+          <div class="card-stats-row" dir="ltr">
+            <span class="stat-yes">${q.yes_count||0}</span>
+            <span class="stat-mid">vs</span>
+            <span class="stat-no">${q.no_count||0}</span>
+            <span class="stat-label">bets</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // ===== PORTFOLIO =====
 async function loadPortfolio() {
   const res=await fetch(`${API}/api/my-bets`,{headers:authHeaders()});
@@ -457,6 +509,13 @@ async function loadPortfolio() {
 }
 
 function renderPortfolio(bets) {
+  // מיון: פעילים קודם, אחר כך לפי id יורד (= חדש יותר למעלה)
+  bets = [...bets].sort((a, b) => {
+    if (!a.won && !b.won && a.payout === null && b.payout === null) return b.id - a.id;
+    if (a.won !== null && b.won === null) return 1;  // סגורים אחרי פעילים
+    if (a.won === null && b.won !== null) return -1;
+    return b.id - a.id;
+  });
   const list=document.getElementById('portfolio-list');
   if(!bets.length){list.innerHTML=`<div class="empty-state"><span class="emoji">📭</span>אין בט</div>`;return;}
   list.innerHTML=bets.map(b=>{
@@ -981,30 +1040,19 @@ async function deleteUser(id, name) {
 
 // ===== COMPLAINTS =====
 const FAKE_NAMES = [
-  "הגשתי ב-23:58 ונשרפתי",
-  "ישבתי בשורה הראשונה כדי שיזכור אותי",
-  "שאלתי שאלה והרצה אמר שאלה מצוינת ולא ענה",
-  "התעוררתי להרצאה של 8 ולא הבנתי למה",
+  "הגשתי ב23:59",
+  "ישבתי בשורה הראשונה - לא עזר",
+  "הגשתי דף ריק",
   "יצאתי מהבחינה בטוח שעברתי",
-  "סיימתי את הגיליון ב-5 דקות וחיכיתי שעה",
   "רשמתי הכל ולא הבנתי כלום",
-  "הגשתי יומיים לפני",
+  "נתראה במועד ב",
   "המחשבון לא עזר",
-  "ישנתי בהרצאה אבל הצלמתי את הלוח",
-  "חיכיתי לסיכום בוואטסאפ שלא הגיע",
-  "ביקשתי הארכה ואמרו לא",
+  "ישנתי בהרצאה אבל צילמתי את הלוח",
   "קראתי את השאלה עשר פעמים ועדיין לא הבנתי",
   "הייתי בטוח שזה לא בחומר",
-  "אנונימי אבל כולם יודעים מי זה",
-  "הגעתי בדיוק כשסגרו את הדלת",
-  "עשיתי את הכל נכון לפי התשובות שלאחר הבחינה",
-  "לא ישנתי לפני הבחינה ובכל זאת לא עזר",
-  "התקנתי את הסביבה שלוש שעות לפני ההגשה",
-  "מי שהשאיל עט ולא החזיר",
+  "למדתי את כל הסמסטר בשבוע",
   "קיבלתי 55 וחיוך מהמרצה",
-  "שרדתי את הסמסטר (בדיוק)",
-  "הבנתי את החומר רק אחרי הבחינה",
-  "ביקשתי ביטול עונשין ואמרו שזה לא קיים פה"
+  "הבנתי את החומר רק אחרי הבחינה"
 ];
 
 let selectedStars = 0;
@@ -1204,7 +1252,7 @@ async function approveSuggestion(id) {
 
 async function deleteSuggestion(id) {
   const res = await fetch('/api/suggestions/' + id, { method: 'DELETE', headers: authHeaders() });
-  if (res.ok) { showToast('ההצעה נדחתה לפח ההיסטוריה 🗑️', 'success'); loadAdminSuggestions(); }
+  if (res.ok) { showToast('ההצעה נזרקה לפח - יחד עם שמחת החיים שלי 🗑️', 'success'); loadAdminSuggestions(); }
 }
 
 // ===== ADMIN ACTIVITY LOG =====
