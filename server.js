@@ -151,7 +151,7 @@ app.get('/api/questions', async (req, res) => {
       ? 'SELECT * FROM questions ORDER BY created_at DESC'
       : `SELECT * FROM questions
          WHERE resolved = 0
-            OR (resolved = 1 AND (resolved_at IS NULL OR resolved_at > NOW() - INTERVAL '24 hours'))
+            OR (resolved = 1 AND resolved_at IS NOT NULL AND resolved_at > NOW() - INTERVAL '24 hours')
          ORDER BY resolved ASC, created_at DESC`;
     const { rows } = await pool.query(sql);
     res.json({ questions: rows });
@@ -619,8 +619,8 @@ app.get('/api/archive', async (req, res) => {
     const { rows } = await pool.query(`
       SELECT * FROM questions
       WHERE resolved = 1
-        AND resolved_at < NOW() - INTERVAL '24 hours'
-      ORDER BY resolved_at DESC
+        AND (resolved_at IS NULL OR resolved_at < NOW() - INTERVAL '24 hours')
+      ORDER BY COALESCE(resolved_at, created_at) DESC
     `);
     res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
