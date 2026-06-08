@@ -182,6 +182,7 @@ function showSection(name, btn) {
   if (name==='leaderboard') loadLeaderboard();
   if (name==='admin')       loadAdminQuestions();
   if (name==='complaints')   loadComplaints();
+  if (name==='archive')      loadArchive();
 }
 
 function setMobileTab(btn) {
