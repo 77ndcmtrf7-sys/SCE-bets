@@ -1004,7 +1004,7 @@ function dismissGuestBanner() {
 function switchAdminTab(tab, btn) {
   document.querySelectorAll('.admin-inner-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('admin-tab-questions').style.display = tab==='questions' ? 'block' : 'none';
+  document.getElementById('admin-tab-questions').style.display = tab==='questions' ? 'grid' : 'none';
   document.getElementById('admin-tab-users').style.display     = tab==='users'     ? 'block' : 'none';
   document.getElementById('admin-tab-suggestions').style.display = tab==='suggestions' ? 'block' : 'none';
   document.getElementById('admin-tab-activity').style.display  = tab==='activity'  ? 'block' : 'none';
