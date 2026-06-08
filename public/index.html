@@ -188,8 +188,8 @@
         <button class="admin-inner-tab" onclick="switchAdminTab('activity', this)">פעילות</button>
         <button class="admin-inner-tab" onclick="switchAdminTab('suggestions', this)">הצעות <span id="suggestions-badge" style="display:none;background:#ff6eb4;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-right:4px;"></span></button>
       </div>
-    <div id="admin-tab-questions" class="admin-panel">
-      <div class="admin-card">
+    <div id="admin-tab-questions" class="admin-panel admin-questions-panel">
+      <div class="admin-card admin-create-card">
         <h3>שאלה חדשה</h3>
         <input type="text" id="new-question-text" placeholder="טקסט השאלה..." class="admin-input" />
         <select id="new-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('new-question-category-custom', this)">
@@ -228,7 +228,7 @@
           <button class="admin-btn" onclick="createQuestion(true)" style="flex:1;background:var(--bg4);color:var(--text);border:1px solid var(--border2);">שמור טיוטה</button>
         </div>
       </div>
-      <div class="admin-card">
+      <div class="admin-card admin-existing-card">
         <h3>שאלות קיימות</h3>
         <div id="admin-questions-list"></div>
       </div>

@@ -1812,3 +1812,29 @@ body::after {
     background: rgba(255,59,48,0.22);
   }
 }
+
+/* ===== ADMIN QUESTIONS PANEL — two columns ===== */
+.admin-questions-panel {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.admin-create-card {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.admin-existing-card {
+  min-height: 200px;
+}
+@media (max-width: 900px) {
+  .admin-questions-panel {
+    grid-template-columns: 1fr;
+  }
+  .admin-create-card {
+    position: static;
+    max-height: none;
+  }
+}

@@ -620,7 +620,7 @@ app.get('/api/archive', async (req, res) => {
       SELECT * FROM questions
       WHERE resolved = 1
         AND (resolved_at IS NULL OR resolved_at < NOW() - INTERVAL '24 hours')
-      ORDER BY COALESCE(resolved_at, created_at) DESC
+      ORDER BY COALESCE(resolved_at, created_at::TIMESTAMPTZ) DESC
     `);
     res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
