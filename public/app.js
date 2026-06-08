@@ -476,6 +476,7 @@ function renderArchive(questions) {
     <div class="market-card resolved" data-cat="${q.category||'כללי'}" ${cardBorderStyle}>
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
+      ${q.description ? `<div class="card-description">${q.description}</div>` : ''}
       <div class="choice-blocks">
         <div class="choice-block yes-block ${winnerYes?'winner':'loser'}">
           <span class="choice-pct">${yesPct}%</span>
