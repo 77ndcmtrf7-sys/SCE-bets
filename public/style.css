@@ -1848,15 +1848,16 @@ body::after {
 }
 .inst-btn {
   background: var(--bg3);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   color: var(--text2);
   border-radius: 50px;
-  padding: 6px 16px;
+  padding: 5px 15px;
   font-family: 'Rubik', sans-serif;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  box-sizing: border-box;
 }
 .inst-btn:hover { border-color: var(--accent-start); color: var(--text); }
 .inst-btn.active {
@@ -1885,7 +1886,7 @@ body::after {
 .inst-btn.inst-sce:hover,
 .inst-btn.inst-sce.active {
   background: linear-gradient(135deg, #1a2b4a, #00d4b8) !important;
-  border: none !important;
+  border-color: #00d4b8 !important;
   color: #fff !important;
 }
 .inst-btn.inst-sce:hover img,
@@ -1895,7 +1896,7 @@ body::after {
 .inst-btn.inst-bgu:hover,
 .inst-btn.inst-bgu.active {
   background: linear-gradient(135deg, #1a1a1a, #f5a623) !important;
-  border: none !important;
+  border-color: #f5a623 !important;
   color: #fff !important;
 }
 .inst-btn.inst-bgu:hover img,
