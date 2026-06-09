@@ -116,8 +116,14 @@
     <div class="institution-filter" id="institution-filter">
       <button class="inst-btn active" data-inst="all" onclick="filterByInstitution('all', this)">הכל</button>
       <button class="inst-btn" data-inst="כללי" onclick="filterByInstitution('כללי', this)">כללי</button>
-      <button class="inst-btn" data-inst="סמי שמעון" onclick="filterByInstitution('סמי שמעון', this)">סמי שמעון</button>
-      <button class="inst-btn" data-inst="בן גוריון" onclick="filterByInstitution('בן גוריון', this)">בן גוריון</button>
+      <button class="inst-btn inst-sce" data-inst="סמי שמעון" onclick="filterByInstitution('סמי שמעון', this)">
+        <img src="https://upload.wikimedia.org/wikipedia/he/thumb/c/c9/SCE_logo.svg/120px-SCE_logo.svg.png" alt="SCE" onerror="this.style.display='none'" />
+        סמי שמעון
+      </button>
+      <button class="inst-btn inst-bgu" data-inst="בן גוריון" onclick="filterByInstitution('בן גוריון', this)">
+        <img src="https://upload.wikimedia.org/wikipedia/he/thumb/b/b1/Ben-Gurion_University_of_the_Negev_logo.svg/120px-Ben-Gurion_University_of_the_Negev_logo.svg.png" alt="BGU" onerror="this.style.display='none'" />
+        בן גוריון
+      </button>
     </div>
     <div id="markets-grid" class="markets-grid"></div>
     <div class="suggest-btn-wrap">

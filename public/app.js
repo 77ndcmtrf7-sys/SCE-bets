@@ -275,9 +275,11 @@ function renderMarkets(questions) {
       </div>
       <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
 
-    const catColor = getCategoryColor(q.category);
-    const catStyle = catColor ? `style="color:${catColor}"` : '';
-    const cardBorderStyle = catColor ? `style="border-top-color:${catColor}"` : '';
+    const catColor  = getCategoryColor(q.category);
+    const catStyle  = catColor ? `style="color:${catColor}"` : '';
+    const instColor = getInstitutionColor(q.institution);
+    const borderColor = instColor || catColor || null;
+    const cardBorderStyle = borderColor ? `style="border-top-color:${borderColor}"` : '';
     const shortDesc = q.description ? (q.description.split('\n')[0].length > 80
       ? q.description.split('\n')[0].slice(0,80) + '...'
       : q.description.split('\n')[0] + (q.description.includes('\n') || q.description.length > 80 ? '...' : '')
@@ -791,6 +793,18 @@ function getCategoryColor(cat) {
 }
 
 // ===== INSTITUTION FILTER =====
+const INSTITUTION_CONFIG = {
+  'כללי':        { color: null,      gradient: null },
+  'סמי שמעון':  { color: '#0066cc', gradient: 'linear-gradient(135deg, #0066cc, #ff9900)' },
+  'בן גוריון':  { color: '#003366', gradient: 'linear-gradient(135deg, #003366, #cc0000)' },
+};
+
+function getInstitutionColor(inst) {
+  return INSTITUTION_CONFIG[inst]?.color || null;
+}
+function getInstitutionGradient(inst) {
+  return INSTITUTION_CONFIG[inst]?.gradient || null;
+}
 let _currentInstitution = 'all';
 let _allQuestions = [];
 
