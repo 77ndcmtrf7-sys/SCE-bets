@@ -206,11 +206,12 @@ async function loadMarkets(silent=false) {
   const res  = await fetch(`${API}/api/questions`,{headers:authHeaders()});
   const data = await res.json();
   const questions = data.questions || [];
-  if (silent && document.querySelectorAll('.market-card').length === questions.length) {
-    // עדכון אחוזים בלבד — בלי re-render
-    updateCardPcts(questions);
+  _allQuestions = questions;
+  const filtered = _currentInstitution === 'all' ? questions : questions.filter(q => (q.institution || 'כללי') === _currentInstitution);
+  if (silent && document.querySelectorAll('.market-card').length === filtered.length) {
+    updateCardPcts(filtered);
   } else {
-    renderMarkets(questions);
+    renderMarkets(filtered);
   }
 }
 
@@ -641,6 +642,7 @@ function openEditSuggestionModal(s) {
   }
   // מחלקה
   document.getElementById('edit-suggestion-dept').value = s.department || '';
+  document.getElementById('edit-suggestion-institution').value = s.institution || 'כללי';
   document.getElementById('edit-suggestion-error').textContent = '';
   document.getElementById('edit-suggestion-modal').classList.add('open');
 }
@@ -660,6 +662,7 @@ function getEditSuggestionData() {
     option_yes:  document.getElementById('edit-suggestion-opt-yes').value.trim() || 'כן',
     option_no:   document.getElementById('edit-suggestion-opt-no').value.trim()  || 'לא',
     deadline:    document.getElementById('edit-suggestion-deadline').value || null,
+    institution: document.getElementById('edit-suggestion-institution')?.value || 'כללי',
   };
 }
 
@@ -725,6 +728,7 @@ function openEditQuestionModal(q) {
   }
   // מחלקה
   document.getElementById('edit-question-dept').value = q.department || '';
+  document.getElementById('edit-question-institution').value = q.institution || 'כללי';
   document.getElementById('edit-question-error').textContent = '';
   document.getElementById('edit-question-modal').classList.add('open');
 }
@@ -747,9 +751,10 @@ async function saveEditedQuestion() {
 
   if (!question) { errEl.textContent = 'שאלה לא יכולה להיות ריקה'; return; }
 
+  const institution = document.getElementById('edit-question-institution')?.value || 'כללי';
   const res = await fetch(`/api/questions/${id}`, {
     method: 'PUT', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, category, department, description, option_yes, option_no, deadline })
+    body: JSON.stringify({ question, category, department, description, option_yes, option_no, deadline, institution })
   });
 
   if (res.ok) {
@@ -783,6 +788,18 @@ function getCategoryColor(cat) {
   let hash = 0;
   for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
   return CUSTOM_CAT_PALETTE[Math.abs(hash) % CUSTOM_CAT_PALETTE.length];
+}
+
+// ===== INSTITUTION FILTER =====
+let _currentInstitution = 'all';
+let _allQuestions = [];
+
+function filterByInstitution(inst, btn) {
+  _currentInstitution = inst;
+  document.querySelectorAll('.inst-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = inst === 'all' ? _allQuestions : _allQuestions.filter(q => (q.institution || 'כללי') === inst);
+  renderMarkets(filtered);
 }
 
 // ===== CATEGORY HELPERS =====
@@ -874,7 +891,8 @@ async function createQuestion(asDraft = false) {
     return;
   }
   const descVal = document.getElementById('new-question-description')?.value.trim() || '';
-  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||'',description:descVal})});
+  const institution = document.getElementById('new-question-institution')?.value || 'כללי';
+  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||'',description:descVal,institution})});
   if(res.ok){
     document.getElementById('new-question-text').value='';
     document.getElementById('new-question-category').value='כללי';
@@ -1176,7 +1194,7 @@ async function submitSuggestion() {
   const res = await fetch('/api/suggestions', {
     method: 'POST',
     headers: sugHeaders,
-    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description, deadline: document.getElementById('suggest-deadline')?.value || null })
+    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description, deadline: document.getElementById('suggest-deadline')?.value || null, institution: document.getElementById('suggest-institution')?.value || 'כללי' })
   });
 
   if (res.ok) {

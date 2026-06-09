@@ -113,6 +113,12 @@
       </div>
       <button class="suggest-pill-btn suggest-pill-inline" onclick="openSuggestModal()">+ הצע סקר</button>
     </div>
+    <div class="institution-filter" id="institution-filter">
+      <button class="inst-btn active" data-inst="all" onclick="filterByInstitution('all', this)">הכל</button>
+      <button class="inst-btn" data-inst="כללי" onclick="filterByInstitution('כללי', this)">כללי</button>
+      <button class="inst-btn" data-inst="סמי שמעון" onclick="filterByInstitution('סמי שמעון', this)">סמי שמעון</button>
+      <button class="inst-btn" data-inst="בן גוריון" onclick="filterByInstitution('בן גוריון', this)">בן גוריון</button>
+    </div>
     <div id="markets-grid" class="markets-grid"></div>
     <div class="suggest-btn-wrap">
       <button class="suggest-pill-btn" onclick="openSuggestModal()">+ הצע סקר</button>
@@ -216,6 +222,12 @@
         </select>
         <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
         <textarea id="new-question-description" class="admin-input" placeholder="הוסף הקשר או פרטים נוספים על הסקר..." rows="2" style="resize:vertical;"></textarea>
+        <label class="admin-date-label">מוסד</label>
+        <select id="new-question-institution" class="admin-input admin-select">
+          <option value="כללי">כללי</option>
+          <option value="סמי שמעון">סמי שמעון</option>
+          <option value="בן גוריון">בן גוריון</option>
+        </select>
         <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
         <input type="datetime-local" id="new-question-deadline" class="admin-input" />
         <label class="admin-date-label">אפשרויות בחירה</label>
@@ -296,6 +308,12 @@
         <label>אפשרות ב</label>
         <input type="text" id="suggest-opt-no" placeholder='לא' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
       </div>
+      <label class="admin-date-label" style="padding-right:4px;">מוסד</label>
+      <select id="suggest-institution" class="admin-input admin-select">
+        <option value="כללי">כללי</option>
+        <option value="סמי שמעון">סמי שמעון</option>
+        <option value="בן גוריון">בן גוריון</option>
+      </select>
       <label class="admin-date-label" style="padding-right:4px;">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
       <input type="datetime-local" id="suggest-deadline" class="admin-input" />
       <button class="place-bet-btn" onclick="submitSuggestion()">שלח הצעה 🚀</button>
@@ -411,6 +429,12 @@
       <input type="text" id="edit-suggestion-opt-yes" class="admin-input" />
       <label class="admin-date-label">אפשרות ב</label>
       <input type="text" id="edit-suggestion-opt-no" class="admin-input" />
+      <label class="admin-date-label">מוסד</label>
+      <select id="edit-suggestion-institution" class="admin-input admin-select">
+        <option value="כללי">כללי</option>
+        <option value="סמי שמעון">סמי שמעון</option>
+        <option value="בן גוריון">בן גוריון</option>
+      </select>
       <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
       <input type="datetime-local" id="edit-suggestion-deadline" class="admin-input" />
       <div style="display:flex;gap:8px;margin-top:4px;">
@@ -460,6 +484,12 @@
       <input type="text" id="edit-question-opt-yes" class="admin-input" />
       <label class="admin-date-label">אפשרות ב (לא)</label>
       <input type="text" id="edit-question-opt-no" class="admin-input" />
+      <label class="admin-date-label">מוסד</label>
+      <select id="edit-question-institution" class="admin-input admin-select">
+        <option value="כללי">כללי</option>
+        <option value="סמי שמעון">סמי שמעון</option>
+        <option value="בן גוריון">בן גוריון</option>
+      </select>
       <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
       <input type="datetime-local" id="edit-question-deadline" class="admin-input" />
       <button class="place-bet-btn" onclick="saveEditedQuestion()">שמור שינויים</button>
