@@ -1882,21 +1882,21 @@ body::after {
   filter: grayscale(0.3);
 }
 
-/* SCE — תכלת+כחול כהה */
+/* SCE — ירוק תכלת + כחול כהה */
 .inst-btn.inst-sce:hover,
 .inst-btn.inst-sce.active {
-  background: linear-gradient(135deg, #1a2b4a, #00d4b8) !important;
-  border-color: #00d4b8 !important;
+  background: linear-gradient(135deg, #1a3a5c, #00e5b0) !important;
+  border-color: #00e5b0 !important;
   color: #fff !important;
 }
 .inst-btn.inst-sce:hover img,
 .inst-btn.inst-sce.active img { filter: brightness(10); }
 
-/* BGU — צהוב+כהה */
+/* BGU — כתום+חום */
 .inst-btn.inst-bgu:hover,
 .inst-btn.inst-bgu.active {
-  background: linear-gradient(135deg, #1a1a1a, #f5a623) !important;
-  border-color: #f5a623 !important;
+  background: linear-gradient(135deg, #7a3a00, #ff8c00) !important;
+  border-color: #ff8c00 !important;
   color: #fff !important;
 }
 .inst-btn.inst-bgu:hover img,

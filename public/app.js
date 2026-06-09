@@ -795,8 +795,8 @@ function getCategoryColor(cat) {
 // ===== INSTITUTION FILTER =====
 const INSTITUTION_CONFIG = {
   'כללי':       { color: null,      gradient: null },
-  'סמי שמעון': { color: '#00b4a6', gradient: 'linear-gradient(135deg, #1a2b4a, #00b4a6)' },
-  'בן גוריון':  { color: '#f5a623', gradient: 'linear-gradient(135deg, #1a1a1a, #f5a623)' },
+  'סמי שמעון': { color: '#00e5b0', gradient: 'linear-gradient(135deg, #1a3a5c, #00e5b0)' },
+  'בן גוריון':  { color: '#ff8c00', gradient: 'linear-gradient(135deg, #7a3a00, #ff8c00)' },
 };
 
 function getInstitutionColor(inst) {
