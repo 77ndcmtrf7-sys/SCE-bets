@@ -1873,7 +1873,6 @@ body::after {
   display: flex;
   align-items: center;
   gap: 6px;
-  overflow: hidden;
 }
 .inst-btn img {
   height: 18px;
@@ -1885,11 +1884,9 @@ body::after {
 /* SCE — תכלת+כחול כהה */
 .inst-btn.inst-sce:hover,
 .inst-btn.inst-sce.active {
-  background: linear-gradient(to left, #1a2b4a, #00b4a6) !important;
-  border-color: transparent !important;
+  background: linear-gradient(135deg, #1a2b4a, #00d4b8) !important;
+  border: none !important;
   color: #fff !important;
-  border-radius: 50px !important;
-  overflow: hidden;
 }
 .inst-btn.inst-sce:hover img,
 .inst-btn.inst-sce.active img { filter: brightness(10); }
@@ -1897,11 +1894,9 @@ body::after {
 /* BGU — צהוב+כהה */
 .inst-btn.inst-bgu:hover,
 .inst-btn.inst-bgu.active {
-  background: linear-gradient(to left, #1a1a1a, #f5a623) !important;
-  border-color: transparent !important;
+  background: linear-gradient(135deg, #1a1a1a, #f5a623) !important;
+  border: none !important;
   color: #fff !important;
-  border-radius: 50px !important;
-  overflow: hidden;
 }
 .inst-btn.inst-bgu:hover img,
 .inst-btn.inst-bgu.active img { filter: brightness(10); }
