@@ -1901,3 +1901,15 @@ body::after {
 }
 .inst-btn.inst-bgu:hover img,
 .inst-btn.inst-bgu.active img { filter: brightness(10); }
+
+/* ===== INSTITUTION TAG ON CARD ===== */
+.inst-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}

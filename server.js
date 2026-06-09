@@ -609,7 +609,7 @@ app.put('/api/questions/:id', adminAuth, async (req, res) => {
     const { question, category, option_yes, option_no, department, description, deadline, institution } = req.body;
     await pool.query(
       'UPDATE questions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7, institution=$8 WHERE id=$9',
-      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, req.params.id]
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, institution||'כללי', req.params.id]
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }

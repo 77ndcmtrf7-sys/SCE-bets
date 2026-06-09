@@ -277,16 +277,19 @@ function renderMarkets(questions) {
 
     const catColor  = getCategoryColor(q.category);
     const catStyle  = catColor ? `style="color:${catColor}"` : '';
+    const cardBorderStyle = catColor ? `style="border-top-color:${catColor}"` : '';
     const instColor = getInstitutionColor(q.institution);
-    const borderColor = instColor || catColor || null;
-    const cardBorderStyle = borderColor ? `style="border-top-color:${borderColor}"` : '';
+    const instGrad  = getInstitutionGradient(q.institution);
+    const instTag   = (q.institution && q.institution !== 'כללי')
+      ? `<span class="inst-tag" style="background:${instGrad};color:#fff;">${q.institution}</span>`
+      : '';
     const shortDesc = q.description ? (q.description.split('\n')[0].length > 80
       ? q.description.split('\n')[0].slice(0,80) + '...'
       : q.description.split('\n')[0] + (q.description.includes('\n') || q.description.length > 80 ? '...' : '')
     ) : '';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" data-qid="${q.id}" data-resolved="${q.resolved?1:0}" ${cardBorderStyle}>
-      <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
+      <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span>${instTag}</div>
       <div class="card-question">${q.question}</div>
       ${shortDesc ? `<div class="card-description">${shortDesc}</div>` : ''}
       ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
