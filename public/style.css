@@ -480,6 +480,30 @@ body::after {
   grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
   gap: 14px;
 }
+/* Masonry mode — מופעל ע"י JS שמוסיף .masonry-active */
+.markets-grid.masonry-active {
+  display: block;
+  position: relative;
+}
+.markets-grid.masonry-active .market-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  transition: top 0.35s cubic-bezier(0.16,1,0.3,1),
+              left 0.35s cubic-bezier(0.16,1,0.3,1),
+              opacity 0.3s ease,
+              box-shadow 0.2s ease,
+              border-color 0.2s ease;
+  will-change: top, left;
+}
+/* ב-masonry, hover לא זז במקום (translateY ישבור את המיקום) — משתמשים ב-scale */
+.markets-grid.masonry-active .market-card:hover {
+  transform: scale(1.015);
+  box-shadow: var(--shadow);
+  border-color: var(--border2);
+  z-index: 2;
+}
 
 .market-card {
   background: var(--bg2); border: 1px solid var(--border);
