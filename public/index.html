@@ -1,508 +1,533 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#00a3b4" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SCE Bets</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'><rect width='100' height='60' fill='%23111'/><text x='50' y='42' font-family='Arial Black,sans-serif' font-size='36' font-weight='900' text-anchor='middle' fill='url(%23g)'>Bets</text><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='%23ff6eb4'/><stop offset='1' stop-color='%23ff9f0a'/></linearGradient></defs></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- AUTH -->
-<div id="auth-overlay" class="auth-overlay" style="display:none">
-  <div class="auth-box">
-    <button class="auth-close-btn" onclick="hideAuthOverlay()" title="המשך כאורח">✕</button>
-    <div class="auth-logo-wrap">
-      <div class="auth-logo">Bets</div>
-      <div class="auth-sce-logo">SCE</div>
-    </div>
-    <p class="auth-tagline">תודה שבאתם</p>
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay" class="overlay" style="display:none">
+  <div class="auth-card">
+    <button class="overlay-close" onclick="hideAuthOverlay()">×</button>
+    <div class="auth-logo">SCE<span>Bets</span></div>
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchTab('login')">כניסה</button>
-      <button class="auth-tab" onclick="switchTab('register')">הרשמה</button>
+      <button id="tab-login" class="auth-tab active" onclick="switchTab('login')">כניסה</button>
+      <button id="tab-register" class="auth-tab" onclick="switchTab('register')">הרשמה</button>
     </div>
-    <div id="login-form">
-      <input type="text" id="login-username" placeholder="שם משתמש" class="auth-input" autocomplete="username" />
-      <div class="password-wrap">
-        <input type="password" id="login-password" placeholder="סיסמה" class="auth-input" autocomplete="current-password" style="margin-bottom:0" />
-        <button type="button" class="eye-btn" onclick="togglePassword('login-password', this)">👁</button>
+    <div id="login-form" class="auth-form">
+      <div class="field-group">
+        <label>שם משתמש</label>
+        <input id="login-username" type="text" placeholder="הכנס שם משתמש" onkeydown="if(event.key==='Enter')login()" />
       </div>
-      <button class="auth-btn" onclick="login()">כניסה →</button>
-    </div>
-    <div id="register-form" style="display:none">
-      <input type="text" id="reg-username" placeholder="שם משתמש" class="auth-input" autocomplete="username" />
-<div class="password-wrap">
-        <input type="password" id="reg-password" placeholder="סיסמה" class="auth-input" autocomplete="new-password" style="margin-bottom:0" />
-        <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)">👁</button>
+      <div class="field-group">
+        <label>סיסמה</label>
+        <div class="pw-wrap">
+          <input id="login-password" type="password" placeholder="הכנס סיסמה" onkeydown="if(event.key==='Enter')login()" />
+          <button class="pw-eye" onclick="togglePw('login-password',this)" tabindex="-1">👁</button>
+        </div>
       </div>
-      <button class="auth-btn" onclick="register()">בואו נתחיל 🚀</button>
+      <button class="btn-primary" onclick="login()">כניסה</button>
     </div>
-    <div id="auth-error" class="auth-error"></div>
+    <div id="register-form" class="auth-form" style="display:none">
+      <div class="field-group">
+        <label>שם משתמש</label>
+        <input id="reg-username" type="text" placeholder="בחר שם משתמש" onkeydown="if(event.key==='Enter')register()" />
+      </div>
+      <div class="field-group">
+        <label>סיסמה</label>
+        <div class="pw-wrap">
+          <input id="reg-password" type="password" placeholder="לפחות 4 תווים" onkeydown="if(event.key==='Enter')register()" />
+          <button class="pw-eye" onclick="togglePw('reg-password',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="register()">יצירת חשבון</button>
+    </div>
+    <p id="auth-error" class="auth-error"></p>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app">
-  <nav class="navbar">
-    <div class="nav-logo-wrap" onclick="softRefresh()" style="cursor:pointer;">
-      <div class="nav-logo">Bets</div>
-      <div class="nav-sce-badge">SCE</div>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo" onclick="softRefresh()">SCE<span>Bets</span></div>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="showSection('markets',this)">שוק</button>
+      <button class="nav-link" onclick="showSection('portfolio',this)">הימורים שלי</button>
+      <button class="nav-link" onclick="showSection('leaderboard',this)">טבלה</button>
+      <button class="nav-link" onclick="showSection('archive',this)">ארכיון</button>
+      <button class="nav-link" onclick="showSection('complaints',this)">בקשות</button>
+      <button id="admin-tab" class="nav-link" style="display:none" onclick="showSection('admin',this)">
+        ניהול <span id="suggestions-badge" class="badge" style="display:none"></span>
+      </button>
     </div>
-    <div class="nav-center">
-      <button class="nav-tab active" onclick="showSection('markets',this)">שוק</button>
-      <button class="nav-tab" onclick="showSection('portfolio',this)">ההימורים שלי</button>
-      <button class="nav-tab" onclick="showSection('leaderboard',this)">הטופ של הטופ</button>
-      <button class="nav-tab" onclick="showSection('complaints',this)">בקשות סטודנט</button>
-      <button class="nav-tab" onclick="showSection('archive',this)">ארכיון</button>
-      <button class="nav-tab" id="admin-tab" onclick="showSection('admin',this)" style="display:none">משרד הדיקן</button>
-    </div>
-    <div class="nav-balance-mobile" id="nav-balance-mobile-wrap" style="display:none">
-      <span id="nav-balance-mobile">—</span>
-      <span style="font-size:10px;opacity:0.7;">נק"ז</span>
-    </div>
-    <div class="nav-right">
-      <div class="balance-chip" id="nav-balance-chip" style="display:none">
-        <span id="nav-balance">—</span>
-        <span class="balance-label">נק"ז</span>
+    <div class="nav-actions">
+      <div id="nav-balance-chip" class="balance-chip" style="display:none">
+        <span id="nav-balance">0</span>
+        <span class="balance-unit">נק"ז</span>
       </div>
-      <div class="user-chip" id="nav-username" onclick="openProfileModal()" style="display:none;cursor:pointer;" title="ערוך פרופיל">—</div>
-      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="עבור בין מצבי תצוגה">☀️</button>
-      <button class="logout-btn" id="logout-btn" onclick="logout()" style="display:none">יציאה</button>
-      <button class="auth-nav-btn" id="auth-nav-btn" onclick="showAuthOverlay()">כניסה / הרשמה</button>
+      <span id="nav-username" class="nav-user" style="display:none"></span>
+      <button id="auth-nav-btn" class="btn-outline-sm" onclick="showAuthOverlay()">כניסה</button>
+      <button id="logout-btn" class="btn-ghost-sm" style="display:none" onclick="logout()">יציאה</button>
+      <button id="profile-btn" class="avatar-btn" style="display:none" onclick="openProfileModal()" title="פרופיל">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
+      <button id="theme-toggle" class="icon-btn" onclick="toggleTheme()" title="שנה ערכת נושא"></button>
     </div>
-  </nav>
-
-  <!-- MOBILE BOTTOM TABS -->
-  <div class="mobile-tabs">
-    <button class="mobile-tab active" onclick="showSection('markets',this);setMobileTab(this)">
-      <span class="mtab-icon">📊</span>שוק
-    </button>
-    <button class="mobile-tab" onclick="showSection('portfolio',this);setMobileTab(this)">
-      <span class="mtab-icon">📋</span>שלי
-    </button>
-    <button class="mobile-tab" onclick="showSection('archive',this);setMobileTab(this)">
-      <span class="mtab-icon">🗂️</span>ארכיון
-    </button>
-    <button class="mobile-tab" onclick="showSection('leaderboard',this);setMobileTab(this)">
-      <span class="mtab-icon">🏆</span>טבלה
-    </button>
-    <button class="mobile-tab" onclick="showSection('complaints',this);setMobileTab(this)">
-      <span class="mtab-icon">📮</span>בקשות
-    </button>
-    <button class="mobile-tab" id="mobile-admin-tab" onclick="showSection('admin',this);setMobileTab(this)" style="display:none">
-      <span class="mtab-icon">🏛️</span>משרד
-    </button>
   </div>
+</nav>
 
+<!-- GUEST BANNER -->
+<div id="guest-banner" class="guest-banner" style="display:none">
+  <span>👋 אתה גולש כאורח — <button onclick="showAuthOverlay()" class="banner-link">הירשם</button> כדי להשתתף ולצבור נק"ז</span>
+  <button onclick="dismissGuestBanner()" class="banner-close">×</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- MARKETS -->
   <section id="section-markets" class="section active">
-    <div id="guest-banner" class="guest-banner" style="display:none">
-      <span>👀 אתה גולש כאורח — הצבעה אחת לכל סקר. רוצה להמר אמיתי? 🤑</span>
-      <div class="guest-banner-actions">
-        <button onclick="showAuthOverlay()" class="guest-banner-btn">הרשם וגלה כמה תפסיד →</button>
-        <button onclick="dismissGuestBanner()" class="guest-banner-close">✕</button>
-      </div>
-    </div>
-    <div class="section-header markets-header">
+    <div class="section-header">
       <div>
-        <h1>סקרים פתוחים</h1>
-        <p class="section-sub">תחזיות, ניחושים, ואולי קצת מזל 🎯</p>
+        <h1 class="section-title">שוק הימורים</h1>
+        <p class="section-sub">שאלות פתוחות — תחזה, הנח הימור, קבל נק"ז</p>
       </div>
-      <button class="suggest-pill-btn suggest-pill-inline" onclick="openSuggestModal()">+ הצע סקר</button>
+      <div class="inst-filter" id="inst-filter-bar">
+        <button class="filter-chip active" onclick="filterByInstitution('all',this)">הכל</button>
+        <button class="filter-chip" onclick="filterByInstitution('כללי',this)">כללי</button>
+        <button class="filter-chip" onclick="filterByInstitution('סמי שמעון',this)">
+          <img src="https://upload.wikimedia.org/wikipedia/he/thumb/a/af/SCE_logo.svg/40px-SCE_logo.svg.png" alt="" class="inst-logo" onerror="this.style.display='none'" />
+          סמי שמעון
+        </button>
+        <button class="filter-chip" onclick="filterByInstitution('בן גוריון',this)">
+          <img src="https://upload.wikimedia.org/wikipedia/he/thumb/8/85/Ben-Gurion_University_of_the_Negev_logo.svg/40px-Ben-Gurion_University_of_the_Negev_logo.svg.png" alt="" class="inst-logo" onerror="this.style.display='none'" />
+          בן גוריון
+        </button>
+      </div>
     </div>
-    <div class="institution-filter" id="institution-filter">
-      <button class="inst-btn active" data-inst="all" onclick="filterByInstitution('all', this)">הכל</button>
-      <button class="inst-btn" data-inst="כללי" onclick="filterByInstitution('כללי', this)">כללי</button>
-      <button class="inst-btn inst-sce" data-inst="סמי שמעון" onclick="filterByInstitution('סמי שמעון', this)">
-        <img src="https://upload.wikimedia.org/wikipedia/he/thumb/c/c9/SCE_logo.svg/120px-SCE_logo.svg.png" alt="SCE" onerror="this.style.display='none'" />
-        סמי שמעון
-      </button>
-      <button class="inst-btn inst-bgu" data-inst="בן גוריון" onclick="filterByInstitution('בן גוריון', this)">
-        <img src="https://upload.wikimedia.org/wikipedia/he/thumb/b/b1/Ben-Gurion_University_of_the_Negev_logo.svg/120px-Ben-Gurion_University_of_the_Negev_logo.svg.png" alt="BGU" onerror="this.style.display='none'" />
-        בן גוריון
-      </button>
-    </div>
-    <div id="markets-grid" class="markets-grid"></div>
-    <div class="suggest-btn-wrap">
-      <button class="suggest-pill-btn" onclick="openSuggestModal()">+ הצע סקר</button>
-    </div>
+    <div id="markets-grid" class="cards-grid"></div>
   </section>
 
-  <section id="section-archive" class="section">
+  <!-- PORTFOLIO -->
+  <section id="section-portfolio" class="section" style="display:none">
     <div class="section-header">
-      <h1>ארכיון סקרים</h1>
-      <p class="section-sub">סקרים שנסגרו — ההיסטוריה לא משקרת 📜</p>
-    </div>
-    <div id="archive-grid" class="markets-grid"></div>
-  </section>
-
-  <section id="section-portfolio" class="section">
-    <div class="section-header">
-      <h1>הימורים שלי</h1>
-      <p class="section-sub">הניחושים שלך — נכונים או לא</p>
+      <div>
+        <h1 class="section-title">הימורים שלי</h1>
+        <p class="section-sub">מעקב אחר הניחושים שלך</p>
+      </div>
     </div>
     <div id="portfolio-list" class="portfolio-list"></div>
   </section>
 
-  <section id="section-leaderboard" class="section">
+  <!-- LEADERBOARD -->
+  <section id="section-leaderboard" class="section" style="display:none">
     <div class="section-header">
-      <h1>מקצועונים אחד אחד</h1>
-      <p class="section-sub">מי שולט בנק"ז של המכללה?</p>
+      <div>
+        <h1 class="section-title">טבלת מובילים</h1>
+        <p class="section-sub">20 השחקנים הטובים ביותר</p>
+      </div>
     </div>
-    <div id="leaderboard-list" class="leaderboard-list"></div>
+    <div class="leaderboard-wrap">
+      <div id="leaderboard-list"></div>
+    </div>
   </section>
 
-  <section id="section-complaints" class="section">
+  <!-- ARCHIVE -->
+  <section id="section-archive" class="section" style="display:none">
     <div class="section-header">
-      <h1>בקשות סטודנט 📮</h1>
-      <p class="section-sub">כי לפעמים צריך לפרוק</p>
-    </div>
-    <div class="complaints-layout">
-      <div class="complaint-form-card">
-        <h3>הוסף תלונה</h3>
-        <div class="star-rating-wrap">
-          <label class="complaint-label">דירוג (אם 0 זה האמת)</label>
-          <div class="star-row" id="star-row">
-            <span class="star" data-val="1">★</span>
-            <span class="star" data-val="2">★</span>
-            <span class="star" data-val="3">★</span>
-            <span class="star" data-val="4">★</span>
-            <span class="star" data-val="5">★</span>
-            <span class="star" data-val="6">★</span>
-            <span class="star" data-val="7">★</span>
-            <span class="star" data-val="8">★</span>
-            <span class="star" data-val="9">★</span>
-            <span class="star" data-val="10">★</span>
-          </div>
-          <span class="star-count" id="star-count">0 / 10</span>
-        </div>
-        <textarea id="complaint-text" class="complaint-textarea" placeholder="מה על הלב? המרצה, האוכל, ה-WiFi, הכל..."></textarea>
-        <button class="complaint-submit-btn" onclick="submitComplaint()">שלח תלונה</button>
-        <div id="complaint-error" class="complaint-error"></div>
+      <div>
+        <h1 class="section-title">ארכיון</h1>
+        <p class="section-sub">שאלות שנסגרו</p>
       </div>
-      <div class="complaints-list-wrap">
+    </div>
+    <div id="archive-grid" class="cards-grid"></div>
+  </section>
+
+  <!-- COMPLAINTS -->
+  <section id="section-complaints" class="section" style="display:none">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">בקשות סטודנט</h1>
+        <p class="section-sub">שתף את הדיקנות בחוויה שלך</p>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <h3 class="panel-title">פרסם בקשה חדשה</h3>
+        <div class="field-group">
+          <label>תוכן הבקשה</label>
+          <textarea id="complaint-text" rows="4" placeholder="מה תרצה לשתף?"></textarea>
+        </div>
+        <div class="field-group">
+          <label>דירוג (1–10)</label>
+          <div id="star-rating" class="stars"></div>
+          <input id="complaint-rating" type="hidden" value="0" />
+        </div>
+        <button class="btn-primary" onclick="submitComplaint()">שלח</button>
+      </div>
+      <div class="panel">
+        <h3 class="panel-title">בקשות שהוגשו</h3>
         <div id="complaints-list"></div>
       </div>
     </div>
   </section>
 
-  <section id="section-admin" class="section">
+  <!-- ADMIN -->
+  <section id="section-admin" class="section" style="display:none">
     <div class="section-header">
-      <h1>ניהול</h1>
-      <p class="section-sub">יצירה וניהול שאלות</p>
-    </div>
-    <div class="admin-inner-tabs">
-        <button class="admin-inner-tab active" onclick="switchAdminTab('questions', this)">שאלות</button>
-        <button class="admin-inner-tab" onclick="switchAdminTab('users', this)">משתמשים</button>
-        <button class="admin-inner-tab" onclick="switchAdminTab('activity', this)">פעילות</button>
-        <button class="admin-inner-tab" onclick="switchAdminTab('suggestions', this)">הצעות <span id="suggestions-badge" style="display:none;background:#ff6eb4;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-right:4px;"></span></button>
+      <div>
+        <h1 class="section-title">ניהול</h1>
+        <p class="section-sub">משרד הדיקן</p>
       </div>
-    <div id="admin-tab-questions" class="admin-panel admin-questions-panel">
-      <div class="admin-card admin-create-card">
-        <h3>שאלה חדשה</h3>
-        <input type="text" id="new-question-text" placeholder="טקסט השאלה..." class="admin-input" />
-        <select id="new-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('new-question-category-custom', this)">
-          <option value="כללי">כללי</option>
+    </div>
+    <div class="admin-tabs-row">
+      <button class="admin-tab-btn active" onclick="switchAdminTab('questions',this)">שאלות</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('users',this)">משתמשים</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('activity',this)">פעילות</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('suggestions',this)">הצעות <span id="admin-suggestions-badge" class="badge" style="display:none"></span></button>
+    </div>
+
+    <!-- ADMIN: Questions -->
+    <div id="admin-tab-questions">
+      <div class="panel" style="margin-bottom:1.5rem">
+        <h3 class="panel-title">שאלה חדשה</h3>
+        <div class="form-grid">
+          <div class="field-group">
+            <label>שאלה</label>
+            <input id="new-q-text" type="text" placeholder="טקסט השאלה" />
+          </div>
+          <div class="field-group">
+            <label>תיאור (אופציונלי)</label>
+            <input id="new-q-desc" type="text" placeholder="הסבר קצר" />
+          </div>
+          <div class="field-group">
+            <label>תשובה כן</label>
+            <input id="new-q-yes-label" type="text" placeholder='כן (ברירת מחדל: "כן")' />
+          </div>
+          <div class="field-group">
+            <label>תשובה לא</label>
+            <input id="new-q-no-label" type="text" placeholder='לא (ברירת מחדל: "לא")' />
+          </div>
+          <div class="field-group">
+            <label>קטגוריה</label>
+            <select id="new-q-cat" onchange="toggleCustomCategory('new-q-cat-custom','new-q-cat')">
+              <option value="הרצאות">הרצאות</option>
+              <option value="בחינות">בחינות</option>
+              <option value="קפיטריה">קפיטריה</option>
+              <option value="כללי">כללי</option>
+              <option value="custom">אחר...</option>
+            </select>
+            <input id="new-q-cat-custom" type="text" placeholder="קטגוריה מותאמת" style="display:none;margin-top:.5rem" />
+          </div>
+          <div class="field-group">
+            <label>מחלקה</label>
+            <select id="new-q-dept">
+              <option value="">כל המחלקות</option>
+              <option>הנדסת תוכנה</option><option>הנדסת חשמל</option><option>הנדסה מכנית</option>
+              <option>מדעי המחשב</option><option>הנדסה אזרחית</option><option>הנדסת תעשייה</option>
+              <option>אופטיקה ופוטוניקה</option><option>רפואה</option><option>אחר</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>מוסד</label>
+            <select id="new-q-inst">
+              <option value="כללי">כללי</option>
+              <option value="סמי שמעון">סמי שמעון</option>
+              <option value="בן גוריון">בן גוריון</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>תאריך סיום</label>
+            <input id="new-q-deadline" type="datetime-local" />
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="createQuestion(false)">פרסם שאלה</button>
+          <button class="btn-outline" onclick="createQuestion(true)">שמור טיוטה</button>
+        </div>
+      </div>
+      <div id="admin-questions-list" class="admin-list"></div>
+    </div>
+
+    <!-- ADMIN: Users -->
+    <div id="admin-tab-users" style="display:none">
+      <div id="admin-users-list" class="admin-list"></div>
+    </div>
+
+    <!-- ADMIN: Activity -->
+    <div id="admin-tab-activity" style="display:none">
+      <div class="panel">
+        <div class="filter-row" id="activity-filter-bar-placeholder"></div>
+        <div id="admin-activity-list"></div>
+      </div>
+    </div>
+
+    <!-- ADMIN: Suggestions -->
+    <div id="admin-tab-suggestions" style="display:none">
+      <div id="admin-suggestions-list" class="admin-list"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <button class="mob-btn active" onclick="showSection('markets',this);setMobileTab(this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>שוק</span>
+  </button>
+  <button class="mob-btn" onclick="showSection('portfolio',this);setMobileTab(this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <span>שלי</span>
+  </button>
+  <button class="mob-btn" onclick="showSection('leaderboard',this);setMobileTab(this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+    <span>טבלה</span>
+  </button>
+  <button class="mob-btn" onclick="showSection('archive',this);setMobileTab(this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/></svg>
+    <span>ארכיון</span>
+  </button>
+  <button class="mob-btn" onclick="showSection('complaints',this);setMobileTab(this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span>בקשות</span>
+  </button>
+  <button id="mobile-admin-tab" class="mob-btn" style="display:none" onclick="showSection('admin',this);setMobileTab(this)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M4.93 4.93A10 10 0 0 1 19.07 19.07"/></svg>
+    <span>ניהול</span>
+  </button>
+</nav>
+
+<!-- BET MODAL -->
+<div id="bet-modal" class="modal-overlay" style="display:none" onclick="closeBetModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeBetModal()">×</button>
+    <p class="modal-category" id="modal-category"></p>
+    <h2 id="modal-question" class="modal-question"></h2>
+    <p id="modal-desc" class="modal-desc"></p>
+
+    <div class="modal-split" id="modal-split">
+      <div class="modal-side yes" id="modal-yes-side">
+        <div class="side-pct" id="modal-yes-pct">50%</div>
+        <div class="side-label" id="modal-yes-label">כן</div>
+        <div class="side-vol" id="modal-yes-vol"></div>
+      </div>
+      <div class="modal-side no" id="modal-no-side">
+        <div class="side-pct" id="modal-no-pct">50%</div>
+        <div class="side-label" id="modal-no-label">לא</div>
+        <div class="side-vol" id="modal-no-vol"></div>
+      </div>
+    </div>
+
+    <div id="modal-chart-wrap" class="chart-wrap" style="display:none">
+      <canvas id="modal-chart" width="420" height="80"></canvas>
+    </div>
+
+    <div class="modal-bet-area">
+      <div class="choice-btns">
+        <button id="choice-YES" class="choice-btn yes-btn active" onclick="selectChoice('YES')">
+          <span id="choice-yes-label-btn">כן</span>
+        </button>
+        <button id="choice-NO" class="choice-btn no-btn" onclick="selectChoice('NO')">
+          <span id="choice-no-label-btn">לא</span>
+        </button>
+      </div>
+      <div class="field-group" style="margin-top:1rem">
+        <label>סכום הימור</label>
+        <div class="amount-row">
+          <input id="bet-amount" type="number" min="10" value="50" oninput="updatePayout()" />
+          <span class="amount-unit">נק"ז</span>
+        </div>
+        <div class="chips-row">
+          <button class="chip" onclick="setBetAmount(50)">50</button>
+          <button class="chip" onclick="setBetAmount(100)">100</button>
+          <button class="chip" onclick="setBetAmount(250)">250</button>
+          <button class="chip" onclick="setBetAmount(500)">500</button>
+          <button class="chip" onclick="setBetAmountMax()">הכל</button>
+        </div>
+      </div>
+      <div class="payout-row">
+        <span>תשלום פוטנציאלי</span>
+        <span id="modal-payout" class="payout-val">—</span>
+      </div>
+      <p id="modal-error" class="modal-error"></p>
+      <button class="btn-primary full" onclick="placeBet()">הנח הימור</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUGGEST MODAL -->
+<div id="suggest-modal" class="modal-overlay" style="display:none" onclick="closeSuggestModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeSuggestModal()">×</button>
+    <h2 class="modal-question">הצע שאלה</h2>
+    <div class="form-grid">
+      <div class="field-group">
+        <label>שאלה</label>
+        <input id="sug-text" type="text" placeholder="מה תרצה לשאול?" />
+      </div>
+      <div class="field-group">
+        <label>תיאור (אופציונלי)</label>
+        <input id="sug-desc" type="text" placeholder="הסבר קצר" />
+      </div>
+      <div class="field-group">
+        <label>קטגוריה</label>
+        <select id="sug-cat" onchange="toggleCustomCategory('sug-cat-custom','sug-cat')">
           <option value="הרצאות">הרצאות</option>
           <option value="בחינות">בחינות</option>
           <option value="קפיטריה">קפיטריה</option>
-          <option value="__custom__">אחר — כתוב בעצמך...</option>
+          <option value="כללי">כללי</option>
+          <option value="custom">אחר...</option>
         </select>
-        <input type="text" id="new-question-category-custom" placeholder="קטגוריה מותאמת אישית" class="admin-input" style="display:none;margin-top:-4px;" />
-        <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
-        <select id="new-question-dept" class="admin-input admin-select">
-          <option value="">כללי / לכולם</option>
-          <option value="מכונות">⚙️ מכונות</option>
-          <option value="בניין">🏗️ בניין</option>
-          <option value="חשמל">⚡ חשמל</option>
-          <option value="תוכנה">💻 תוכנה</option>
-          <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
-          <option value="כימית">🧪 כימית</option>
-          <option value="אדריכלות">📐 אדריכלות</option>
-          <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
-          <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
-          <option value="דימות רפואי">🩻 דימות רפואי</option>
+        <input id="sug-cat-custom" type="text" placeholder="קטגוריה" style="display:none;margin-top:.5rem" />
+      </div>
+      <div class="field-group">
+        <label>מחלקה</label>
+        <select id="sug-dept">
+          <option value="">כל המחלקות</option>
+          <option>הנדסת תוכנה</option><option>הנדסת חשמל</option><option>הנדסה מכנית</option>
+          <option>מדעי המחשב</option><option>הנדסה אזרחית</option><option>הנדסת תעשייה</option>
+          <option>אופטיקה ופוטוניקה</option><option>רפואה</option><option>אחר</option>
         </select>
-        <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
-        <textarea id="new-question-description" class="admin-input" placeholder="הוסף הקשר או פרטים נוספים על הסקר..." rows="2" style="resize:vertical;"></textarea>
-        <label class="admin-date-label">מוסד</label>
-        <select id="new-question-institution" class="admin-input admin-select">
+      </div>
+      <div class="field-group">
+        <label>מוסד</label>
+        <select id="sug-inst">
           <option value="כללי">כללי</option>
           <option value="סמי שמעון">סמי שמעון</option>
           <option value="בן גוריון">בן גוריון</option>
         </select>
-        <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
-        <input type="datetime-local" id="new-question-deadline" class="admin-input" />
-        <label class="admin-date-label">אפשרויות בחירה</label>
-        <div class="admin-options-row">
-          <input type="text" id="new-option-yes" placeholder='אפשרות "כן" (ברירת מחדל: כן)' class="admin-input admin-opt-input" />
-          <input type="text" id="new-option-no"  placeholder='אפשרות "לא" (ברירת מחדל: לא)' class="admin-input admin-opt-input" />
-        </div>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-          <button class="admin-btn" onclick="createQuestion(false)" style="flex:1;">פרסם עכשיו</button>
-          <button class="admin-btn" onclick="createQuestion(true)" style="flex:1;background:var(--bg4);color:var(--text);border:1px solid var(--border2);">שמור טיוטה</button>
-        </div>
       </div>
-      <div class="admin-card admin-existing-card">
-        <h3>שאלות קיימות</h3>
-        <div id="admin-questions-list"></div>
+      <div class="field-group">
+        <label>תאריך סיום מוצע</label>
+        <input id="sug-deadline" type="datetime-local" />
       </div>
     </div>
-    <div id="admin-tab-suggestions" style="display:none">
-      <div class="admin-card">
-        <h3>הצעות ממשתמשים</h3>
-        <div id="admin-suggestions-list"></div>
-      </div>
-    </div>
-    <div id="admin-tab-users" style="display:none">
-      <div class="admin-card">
-        <h3>ניהול משתמשים</h3>
-        <div id="admin-users-list"></div>
-      </div>
-    </div>
-    <div id="admin-tab-activity" style="display:none">
-      <div class="admin-card">
-        <h3>לוג פעילות אחרונה</h3>
-        <div id="admin-activity-list"></div>
-      </div>
-    </div>
-  </section>
-</div>
-
-
-<!-- SUGGEST MODAL -->
-<div id="suggest-modal" class="modal-overlay" onclick="closeSuggestModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeSuggestModal()">✕</button>
-    <div class="modal-category">הצע סקר חדש</div>
-    <h2>יש לך רעיון? 💡</h2>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:18px;padding-right:8px;">ההצעה תישלח למנהל לאישור</p>
-    <div class="bet-controls">
-      <input type="text" id="suggest-question" placeholder="מה השאלה? למשל: האם המרצה יגיע בזמן?" class="admin-input" />
-      <select id="suggest-category" class="admin-input admin-select" onchange="toggleCustomCategory('suggest-category-custom', this)">
-        <option value="כללי">כללי</option>
-        <option value="הרצאות">הרצאות</option>
-        <option value="בחינות">בחינות</option>
-        <option value="קפיטריה">קפיטריה</option>
-        <option value="__custom__">אחר — כתוב בעצמך...</option>
-      </select>
-      <input type="text" id="suggest-category-custom" placeholder="קטגוריה מותאמת אישית" class="admin-input" style="display:none;margin-top:-4px;" />
-      <label class="admin-date-label" style="padding-right:4px;">מחלקה <span class="optional-tag">אופציונלי</span></label>
-      <select id="suggest-dept" class="admin-input admin-select">
-        <option value="">כללי / לכולם</option>
-        <option value="מכונות">⚙️ מכונות</option>
-        <option value="בניין">🏗️ בניין</option>
-        <option value="חשמל">⚡ חשמל</option>
-        <option value="תוכנה">💻 תוכנה</option>
-        <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
-        <option value="כימית">🧪 כימית</option>
-        <option value="אדריכלות">📐 אדריכלות</option>
-        <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
-        <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
-        <option value="דימות רפואי">🩻 דימות רפואי</option>
-      </select>
-      <label class="admin-date-label" style="padding-right:4px;">תיאור <span class="optional-tag">אופציונלי</span></label>
-      <textarea id="suggest-description" class="admin-input" placeholder="הקשר או פרטים נוספים..." rows="2" style="resize:vertical;"></textarea>
-      <div class="bet-amount-row">
-        <label>אפשרות א</label>
-        <input type="text" id="suggest-opt-yes" placeholder='כן' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
-      </div>
-      <div class="bet-amount-row">
-        <label>אפשרות ב</label>
-        <input type="text" id="suggest-opt-no" placeholder='לא' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
-      </div>
-      <label class="admin-date-label" style="padding-right:4px;">מוסד</label>
-      <select id="suggest-institution" class="admin-input admin-select">
-        <option value="כללי">כללי</option>
-        <option value="סמי שמעון">סמי שמעון</option>
-        <option value="בן גוריון">בן גוריון</option>
-      </select>
-      <label class="admin-date-label" style="padding-right:4px;">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
-      <input type="datetime-local" id="suggest-deadline" class="admin-input" />
-      <button class="place-bet-btn" onclick="submitSuggestion()">שלח הצעה 🚀</button>
-    </div>
-    <div id="suggest-error" class="modal-error"></div>
+    <button class="btn-primary full" style="margin-top:1rem" onclick="submitSuggestion()">שלח הצעה</button>
   </div>
 </div>
 
-
-<!-- PROFILE MODAL -->
-<div id="profile-modal" class="modal-overlay" onclick="closeProfileModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeProfileModal()">✕</button>
-    <div class="modal-category">הפרופיל שלי</div>
-    <h2 id="profile-username-display"></h2>
-    <div class="bet-controls" style="margin-top:16px;">
-      <div>
-        <label class="admin-date-label">שם תצוגה</label>
-        <input type="text" id="profile-display-name" class="admin-input" placeholder="השם שיוצג לכולם" />
-      </div>
-      <div>
-        <label class="admin-date-label">סיסמה חדשה <span class="optional-tag">אופציונלי</span></label>
-        <div class="password-wrap">
-          <input type="password" id="profile-password" class="admin-input" placeholder="השאר ריק כדי לא לשנות" style="margin-bottom:0" />
-          <button type="button" class="pw-toggle" onclick="togglePw('profile-password', this)">👁</button>
-        </div>
-      </div>
-      <button class="place-bet-btn" onclick="saveProfile()">שמור שינויים</button>
-    </div>
-    <div id="profile-error" class="modal-error"></div>
-    <button class="profile-logout-mobile" onclick="logout();closeProfileModal()">התנתק 👋</button>
-  </div>
-</div>
-
-<!-- BET MODAL -->
-<div id="bet-modal" class="modal-overlay" onclick="closeBetModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeBetModal()">✕</button>
-    <div id="modal-category-tag" class="modal-category"></div>
-    <h2 id="modal-question-text"></h2>
-    <p id="modal-description" class="modal-description" style="display:none"></p>
-    <div id="modal-deadline-info" class="modal-deadline"></div>
-    <div class="modal-odds">
-      <div class="odds-block yes">
-        <div class="odds-label" id="modal-label-yes">כן</div>
-        <div class="odds-val" id="modal-yes-pct">—%</div>
-      </div>
-      <div class="odds-block no">
-        <div class="odds-label" id="modal-label-no">לא</div>
-        <div class="odds-val" id="modal-no-pct">—%</div>
-      </div>
-    </div>
-    <div class="bet-controls">
-      <div class="bet-choice">
-        <button class="choice-btn yes active" id="choice-yes" onclick="selectChoice('YES')">כן</button>
-        <button class="choice-btn no" id="choice-no" onclick="selectChoice('NO')">לא</button>
-      </div>
-      <div class="bet-amount-row">
-        <label>סכום</label>
-        <div class="amount-input-wrap">
-          <input type="number" id="bet-amount" min="10" step="10" value="100" class="bet-input" oninput="updatePayout()" inputmode="numeric" />
-          <span class="amount-unit">נק"ז</span>
-        </div>
-      </div>
-      <div class="bet-payout">
-        <span>פוטנציאל רווח</span>
-        <span id="bet-payout-val" class="payout-val">—</span>
-      </div>
-      <button class="place-bet-btn" onclick="placeBet()">אני בטוח! 🎯</button>
-    </div>
-    <div id="modal-error" class="modal-error"></div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
-<script src="app.js"></script>
 <!-- EDIT SUGGESTION MODAL -->
-<div id="edit-suggestion-modal" class="modal-overlay" onclick="closeEditSuggestionModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeEditSuggestionModal()">✕</button>
-    <div class="modal-category">עריכת הצעה</div>
-    <h2 id="edit-suggestion-title">עריכה</h2>
-    <input type="hidden" id="edit-suggestion-id" />
-    <div class="bet-controls">
-      <label class="admin-date-label">שאלה</label>
-      <input type="text" id="edit-suggestion-question" class="admin-input" />
-      <label class="admin-date-label">קטגוריה</label>
-      <select id="edit-suggestion-category" class="admin-input admin-select" onchange="toggleCustomCategory('edit-suggestion-category-custom', this)">
-        <option value="כללי">כללי</option>
-        <option value="הרצאות">הרצאות</option>
-        <option value="בחינות">בחינות</option>
-        <option value="קפיטריה">קפיטריה</option>
-        <option value="__custom__">אחר — כתוב בעצמך...</option>
-      </select>
-      <input type="text" id="edit-suggestion-category-custom" class="admin-input" placeholder="קטגוריה מותאמת אישית" style="display:none;margin-top:-4px;" />
-      <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
-      <select id="edit-suggestion-dept" class="admin-input admin-select">
-        <option value="">כללי / לכולם</option>
-        <option value="מכונות">⚙️ מכונות</option>
-        <option value="בניין">🏗️ בניין</option>
-        <option value="חשמל">⚡ חשמל</option>
-        <option value="תוכנה">💻 תוכנה</option>
-        <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
-        <option value="כימית">🧪 כימית</option>
-        <option value="אדריכלות">📐 אדריכלות</option>
-        <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
-        <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
-        <option value="דימות רפואי">🩻 דימות רפואי</option>
-      </select>
-      <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
-      <textarea id="edit-suggestion-description" class="admin-input" rows="2" style="resize:vertical;"></textarea>
-      <label class="admin-date-label">אפשרות א</label>
-      <input type="text" id="edit-suggestion-opt-yes" class="admin-input" />
-      <label class="admin-date-label">אפשרות ב</label>
-      <input type="text" id="edit-suggestion-opt-no" class="admin-input" />
-      <label class="admin-date-label">מוסד</label>
-      <select id="edit-suggestion-institution" class="admin-input admin-select">
-        <option value="כללי">כללי</option>
-        <option value="סמי שמעון">סמי שמעון</option>
-        <option value="בן גוריון">בן גוריון</option>
-      </select>
-      <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
-      <input type="datetime-local" id="edit-suggestion-deadline" class="admin-input" />
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <button class="admin-btn" onclick="publishEditedSuggestion()" style="flex:1;">פרסם עכשיו</button>
-        <button class="admin-btn" onclick="saveEditedSuggestionAsDraft()" style="flex:1;background:var(--bg4);color:var(--text);border:1px solid var(--border2);">שמור כטיוטה</button>
+<div id="edit-suggestion-modal" class="modal-overlay" style="display:none" onclick="closeEditSuggestionModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeEditSuggestionModal()">×</button>
+    <h2 class="modal-question">עריכת הצעה</h2>
+    <div class="form-grid">
+      <div class="field-group"><label>שאלה</label><input id="edit-sug-text" type="text" /></div>
+      <div class="field-group"><label>תיאור</label><input id="edit-sug-desc" type="text" /></div>
+      <div class="field-group"><label>תשובה כן</label><input id="edit-sug-yes-label" type="text" /></div>
+      <div class="field-group"><label>תשובה לא</label><input id="edit-sug-no-label" type="text" /></div>
+      <div class="field-group">
+        <label>קטגוריה</label>
+        <select id="edit-sug-cat" onchange="toggleCustomCategory('edit-sug-cat-custom','edit-sug-cat')">
+          <option value="הרצאות">הרצאות</option><option value="בחינות">בחינות</option>
+          <option value="קפיטריה">קפיטריה</option><option value="כללי">כללי</option>
+          <option value="custom">אחר...</option>
+        </select>
+        <input id="edit-sug-cat-custom" type="text" style="display:none;margin-top:.5rem" />
       </div>
+      <div class="field-group">
+        <label>מחלקה</label>
+        <select id="edit-sug-dept">
+          <option value="">כל המחלקות</option>
+          <option>הנדסת תוכנה</option><option>הנדסת חשמל</option><option>הנדסה מכנית</option>
+          <option>מדעי המחשב</option><option>הנדסה אזרחית</option><option>הנדסת תעשייה</option>
+          <option>אופטיקה ופוטוניקה</option><option>רפואה</option><option>אחר</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>מוסד</label>
+        <select id="edit-sug-inst">
+          <option value="כללי">כללי</option>
+          <option value="סמי שמעון">סמי שמעון</option>
+          <option value="בן גוריון">בן גוריון</option>
+        </select>
+      </div>
+      <div class="field-group"><label>תאריך סיום</label><input id="edit-sug-deadline" type="datetime-local" /></div>
     </div>
-    <div id="edit-suggestion-error" class="modal-error"></div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn-primary" onclick="publishEditedSuggestion()">פרסם</button>
+      <button class="btn-outline" onclick="saveEditedSuggestionAsDraft()">שמור טיוטה</button>
+    </div>
+    <input type="hidden" id="edit-sug-id" />
   </div>
 </div>
 
 <!-- EDIT QUESTION MODAL -->
-<div id="edit-question-modal" class="modal-overlay" onclick="closeEditQuestionModal(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeEditQuestionModal()">✕</button>
-    <div class="modal-category">עריכת סקר</div>
-    <input type="hidden" id="edit-question-id" />
-    <div class="bet-controls">
-      <label class="admin-date-label">שאלה</label>
-      <input type="text" id="edit-question-text" class="admin-input" />
-      <label class="admin-date-label">קטגוריה</label>
-      <select id="edit-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('edit-question-category-custom', this)">
-        <option value="כללי">כללי</option>
-        <option value="הרצאות">הרצאות</option>
-        <option value="בחינות">בחינות</option>
-        <option value="קפיטריה">קפיטריה</option>
-        <option value="__custom__">אחר — כתוב בעצמך...</option>
-      </select>
-      <input type="text" id="edit-question-category-custom" class="admin-input" placeholder="קטגוריה מותאמת אישית" style="display:none;margin-top:-4px;" />
-      <label class="admin-date-label">מחלקה <span class="optional-tag">אופציונלי</span></label>
-      <select id="edit-question-dept" class="admin-input admin-select">
-        <option value="">כללי / לכולם</option>
-        <option value="מכונות">⚙️ מכונות</option>
-        <option value="בניין">🏗️ בניין</option>
-        <option value="חשמל">⚡ חשמל</option>
-        <option value="תוכנה">💻 תוכנה</option>
-        <option value="תעשייה וניהול">📊 תעשייה וניהול</option>
-        <option value="כימית">🧪 כימית</option>
-        <option value="אדריכלות">📐 אדריכלות</option>
-        <option value="תקשורת חזותית">🎨 תקשורת חזותית</option>
-        <option value="מדעי המחשב">🖥️ מדעי המחשב</option>
-        <option value="דימות רפואי">🩻 דימות רפואי</option>
-      </select>
-      <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
-      <textarea id="edit-question-description" class="admin-input" rows="2" style="resize:vertical;"></textarea>
-      <label class="admin-date-label">אפשרות א (כן)</label>
-      <input type="text" id="edit-question-opt-yes" class="admin-input" />
-      <label class="admin-date-label">אפשרות ב (לא)</label>
-      <input type="text" id="edit-question-opt-no" class="admin-input" />
-      <label class="admin-date-label">מוסד</label>
-      <select id="edit-question-institution" class="admin-input admin-select">
-        <option value="כללי">כללי</option>
-        <option value="סמי שמעון">סמי שמעון</option>
-        <option value="בן גוריון">בן גוריון</option>
-      </select>
-      <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
-      <input type="datetime-local" id="edit-question-deadline" class="admin-input" />
-      <button class="place-bet-btn" onclick="saveEditedQuestion()">שמור שינויים</button>
+<div id="edit-question-modal" class="modal-overlay" style="display:none" onclick="closeEditQuestionModal(event)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeEditQuestionModal()">×</button>
+    <h2 class="modal-question">עריכת שאלה</h2>
+    <div class="form-grid">
+      <div class="field-group"><label>שאלה</label><input id="edit-q-text" type="text" /></div>
+      <div class="field-group"><label>תיאור</label><input id="edit-q-desc" type="text" /></div>
+      <div class="field-group"><label>תשובה כן</label><input id="edit-q-yes-label" type="text" /></div>
+      <div class="field-group"><label>תשובה לא</label><input id="edit-q-no-label" type="text" /></div>
+      <div class="field-group">
+        <label>קטגוריה</label>
+        <select id="edit-q-cat" onchange="toggleCustomCategory('edit-q-cat-custom','edit-q-cat')">
+          <option value="הרצאות">הרצאות</option><option value="בחינות">בחינות</option>
+          <option value="קפיטריה">קפיטריה</option><option value="כללי">כללי</option>
+          <option value="custom">אחר...</option>
+        </select>
+        <input id="edit-q-cat-custom" type="text" style="display:none;margin-top:.5rem" />
+      </div>
+      <div class="field-group">
+        <label>מחלקה</label>
+        <select id="edit-q-dept">
+          <option value="">כל המחלקות</option>
+          <option>הנדסת תוכנה</option><option>הנדסת חשמל</option><option>הנדסה מכנית</option>
+          <option>מדעי המחשב</option><option>הנדסה אזרחית</option><option>הנדסת תעשייה</option>
+          <option>אופטיקה ופוטוניקה</option><option>רפואה</option><option>אחר</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>מוסד</label>
+        <select id="edit-q-inst">
+          <option value="כללי">כללי</option>
+          <option value="סמי שמעון">סמי שמעון</option>
+          <option value="בן גוריון">בן גוריון</option>
+        </select>
+      </div>
+      <div class="field-group"><label>תאריך סיום</label><input id="edit-q-deadline" type="datetime-local" /></div>
     </div>
-    <div id="edit-question-error" class="modal-error"></div>
+    <button class="btn-primary full" style="margin-top:1rem" onclick="saveEditedQuestion()">שמור שינויים</button>
+    <input type="hidden" id="edit-q-id" />
   </div>
 </div>
 
+<!-- PROFILE MODAL -->
+<div id="profile-modal" class="modal-overlay" style="display:none" onclick="closeProfileModal(event)">
+  <div class="modal-card" style="max-width:400px">
+    <button class="modal-close" onclick="closeProfileModal()">×</button>
+    <h2 class="modal-question">פרופיל</h2>
+    <div class="field-group"><label>שם תצוגה</label><input id="profile-display-name" type="text" /></div>
+    <div class="field-group">
+      <label>סיסמה חדשה (אופציונלי)</label>
+      <div class="pw-wrap">
+        <input id="profile-password" type="password" placeholder="השאר ריק לאי-שינוי" />
+        <button class="pw-eye" onclick="togglePw('profile-password',this)" tabindex="-1">👁</button>
+      </div>
+    </div>
+    <button class="btn-primary full" style="margin-top:1rem" onclick="saveProfile()">שמור</button>
+    <button class="btn-ghost full" style="margin-top:.5rem" onclick="logout()">התנתקות</button>
+  </div>
+</div>
+
+<!-- SUGGEST FAB -->
+<button id="suggest-fab" class="fab" onclick="openSuggestModal()" title="הצע שאלה" style="display:none">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
 </body>
 </html>
