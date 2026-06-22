@@ -1,69 +1,119 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --accent:      #ff6eb4;
-  --accent-h:    #ff4da6;
-  --accent-dim:  rgba(255,110,180,0.12);
-  --accent-bdr:  rgba(255,110,180,0.28);
-  --yes:         #34c759;
-  --yes-bg:      rgba(52,199,89,0.1);
-  --yes-bdr:     rgba(52,199,89,0.25);
-  --no:          #ff3b30;
-  --no-bg:       rgba(255,59,48,0.08);
-  --no-bdr:      rgba(255,59,48,0.2);
-  --gold:        #ff9f0a;
+  /* === צבעי ליבה (לא תלויי מצב) — פלטת בוקי === */
+  --primary:     #7c5cff;   /* אינדיגו-סגול ראשי */
+  --primary2:    #ff5cab;   /* מג'נטה-ורוד משני */
+  --peach:       #ffb074;   /* אפרסק חם */
+
+  /* accent ממופה לסגול הראשי (אופציה ב) — כל ה-CSS הקיים ממשיך לעבוד */
+  --accent:      #7c5cff;
+  --accent-h:    #6b46ff;
+  --accent-dim:  rgba(124,92,255,0.12);
+  --accent-bdr:  rgba(124,92,255,0.28);
+
+  --yes:         #36d3a0;   /* מנטה */
+  --yes-bg:      rgba(54,211,160,0.14);
+  --yes-bdr:     rgba(54,211,160,0.35);
+  --no:          #ff6285;   /* ורד */
+  --no-bg:       rgba(255,98,133,0.14);
+  --no-bdr:      rgba(255,98,133,0.35);
+  --gold:        #ffb074;
+
+  /* aliases מהמפרט החדש */
+  --primary-soft: rgba(124,92,255,0.14);
+  --yes-soft:    rgba(54,211,160,0.14);
+  --no-soft:     rgba(255,98,133,0.14);
+
   --radius:      16px;
   --radius-sm:   10px;
 }
 
 /* ===== LIGHT MODE ===== */
 :root, [data-theme="light"] {
-  --bg:        #f5f0eb;
-  --bg2:       #fdf8f3;
-  --bg3:       #ede8e2;
-  --bg4:       #e2ddd8;
-  --border:    rgba(0,0,0,0.08);
-  --border2:   rgba(0,0,0,0.13);
-  --text:      #1d1d1f;
-  --text2:     #6e6e73;
-  --text3:     #aeaeb2;
-  --shadow-sm: 0 2px 12px rgba(0,0,0,0.07);
-  --shadow:    0 8px 28px rgba(0,0,0,0.1);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-  --nav-bg:    rgba(245,240,235,0.88);
+  --bg:        #f4f1fb;
+  --bg2:       #ffffff;
+  --bg3:       #f6f3fc;
+  --bg4:       #eee9f8;
+  --surface:   #ffffff;
+  --surface2:  #f6f3fc;
+  --surface3:  #eee9f8;
+  --border:    rgba(28,20,55,0.09);
+  --border2:   rgba(28,20,55,0.16);
+  --text:      #1c1733;
+  --text2:     #5d5676;
+  --text3:     #8e88a4;
+  --shadow-sm: 0 2px 12px rgba(80,60,160,0.10);
+  --shadow:    0 16px 40px -20px rgba(80,60,160,0.28);
+  --shadow-lg: 0 20px 50px -18px rgba(80,60,160,0.32);
+  --nav-bg:    rgba(244,241,251,0.82);
+  /* התאמות מצב בהיר לפלטה */
+  --primary:   #6b46ff;
+  --primary2:  #e5479a;
+  --peach:     #f0883a;
+  --accent:    #6b46ff;
+  --accent-h:  #5a37e0;
+  --yes:       #12b482;
+  --no:        #ee4368;
+  --yes-soft:  rgba(18,180,130,0.12);
+  --no-soft:   rgba(238,67,104,0.12);
 }
 
 /* ===== DARK MODE ===== */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg:        #0d0d0f;
-  --bg2:       #1c1c1e;
-  --bg3:       #2c2c2e;
-  --bg4:       #3a3a3c;
+  --bg:        #131120;
+  --bg2:       #1c1930;
+  --bg3:       #252136;
+  --bg4:       #2f2a45;
+  --surface:   #1c1930;
+  --surface2:  #252136;
+  --surface3:  #2f2a45;
   --border:    rgba(255,255,255,0.08);
-  --border2:   rgba(255,255,255,0.13);
-  --text:      #f5f5f7;
-  --text2:     #98989d;
-  --text3:     #636366;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow:    0 4px 20px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
-  --nav-bg:    rgba(13,13,15,0.85);
+  --border2:   rgba(255,255,255,0.15);
+  --text:      #f5f3fc;
+  --text2:     #b6afd0;
+  --text3:     #7f7a9c;
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
+  --shadow:    0 14px 40px -18px rgba(0,0,0,0.7);
+  --shadow-lg: 0 20px 50px -16px rgba(0,0,0,0.75);
+  --nav-bg:    rgba(19,17,32,0.78);
+  --primary:   #7c5cff;
+  --primary2:  #ff5cab;
+  --peach:     #ffb074;
+  --accent:    #7c5cff;
+  --accent-h:  #6b46ff;
+  --yes:       #36d3a0;
+  --no:        #ff6285;
+  --yes-soft:  rgba(54,211,160,0.14);
+  --no-soft:   rgba(255,98,133,0.14);
 }}
 
 [data-theme="dark"] {
-  --bg:        #0a0c10;
-  --bg2:       #1c1c1e;
-  --bg3:       #2c2c2e;
-  --bg4:       #3a3a3c;
+  --bg:        #131120;
+  --bg2:       #1c1930;
+  --bg3:       #252136;
+  --bg4:       #2f2a45;
+  --surface:   #1c1930;
+  --surface2:  #252136;
+  --surface3:  #2f2a45;
   --border:    rgba(255,255,255,0.08);
-  --border2:   rgba(255,255,255,0.13);
-  --text:      #f5f5f7;
-  --text2:     #98989d;
-  --text3:     #636366;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow:    0 4px 20px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
-  --nav-bg:    rgba(13,13,15,0.85);
+  --border2:   rgba(255,255,255,0.15);
+  --text:      #f5f3fc;
+  --text2:     #b6afd0;
+  --text3:     #7f7a9c;
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.5);
+  --shadow:    0 14px 40px -18px rgba(0,0,0,0.7);
+  --shadow-lg: 0 20px 50px -16px rgba(0,0,0,0.75);
+  --nav-bg:    rgba(19,17,32,0.78);
+  --primary:   #7c5cff;
+  --primary2:  #ff5cab;
+  --peach:     #ffb074;
+  --accent:    #7c5cff;
+  --accent-h:  #6b46ff;
+  --yes:       #36d3a0;
+  --no:        #ff6285;
+  --yes-soft:  rgba(54,211,160,0.14);
+  --no-soft:   rgba(255,98,133,0.14);
 }
 
 html, body {
@@ -1937,3 +1987,23 @@ body::after {
   letter-spacing: 0.3px;
   flex-shrink: 0;
 }
+
+/* ============================================
+   === BOOKIE DESIGN SYSTEM — שלב 1 ===
+   פונט מונו למספרים + keyframes מהמפרט
+   ============================================ */
+
+/* מספרים/אחוזים/מחירים בפונט מונו — תחושת בורסה */
+.mono { font-family: 'Space Mono', monospace; }
+
+/* keyframes חדשים מהמפרט (הקיימים לא שוכפלו) */
+@keyframes blob {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(40px,-30px) scale(1.12); }
+  66%     { transform: translate(-30px,25px) scale(.92); }
+}
+@keyframes screenIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:none;} }
+@keyframes popIn    { from { opacity:0; transform:translateY(14px) scale(.97);} to { opacity:1; transform:none;} }
+@keyframes draw     { to { stroke-dashoffset:0; } }
+@keyframes dot      { 0%,100% { transform:scale(1); opacity:1;} 50% { transform:scale(1.6); opacity:.4;} }
+@keyframes toastIn  { from { opacity:0; transform:translateY(20px) scale(.95);} to { opacity:1; transform:none;} }
