@@ -1913,3 +1913,19 @@ body::after {
   letter-spacing: 0.3px;
   flex-shrink: 0;
 }
+
+/* ===== SPACE MONO — מספרים בלבד (תחושת בורסה) ===== */
+.choice-pct,
+.balance-chip span:first-child,
+#nav-balance,
+#nav-balance-mobile,
+.card-volume span,
+.stat-yes,
+.stat-no,
+#bet-payout-val,
+#bet-amount,
+.p-amount,
+.lb-balance {
+  font-family: 'Space Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
