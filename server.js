@@ -156,14 +156,37 @@ app.get('/api/questions', async (req, res) => {
             OR (resolved = 1 AND resolved_at IS NOT NULL AND resolved_at > NOW() - INTERVAL '24 hours')
          ORDER BY resolved ASC, created_at DESC`;
     const { rows } = await pool.query(sql);
+    await attachRealStakes(rows);
     res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
+// מוסיף לכל שאלה real_yes / real_no — סך ההימורים האמיתיים (מ-bets) בכל צד.
+// משמש את הלקוח כדי להציג רווח פוטנציאלי מדויק (זהה לחישוב התשלום בשרת).
+async function attachRealStakes(questions) {
+  if (!questions.length) return;
+  const ids = questions.map(q => q.id);
+  const { rows } = await pool.query(
+    `SELECT question_id, choice, COALESCE(SUM(amount),0) AS stake
+     FROM bets WHERE question_id = ANY($1) GROUP BY question_id, choice`,
+    [ids]
+  );
+  const map = {};
+  for (const r of rows) {
+    if (!map[r.question_id]) map[r.question_id] = { YES: 0, NO: 0 };
+    map[r.question_id][r.choice] = parseFloat(r.stake);
+  }
+  for (const q of questions) {
+    q.real_yes = map[q.id]?.YES || 0;
+    q.real_no  = map[q.id]?.NO  || 0;
+  }
+}
 
 app.get('/api/questions/:id', auth, async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM questions WHERE id = $1', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'שאלה לא נמצאה' });
+    await attachRealStakes(rows);
     res.json({ question: rows[0] });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -223,11 +246,19 @@ app.post('/api/questions/:id/resolve', adminAuth, async (req, res) => {
     const { rows: winBets }  = await client.query('SELECT * FROM bets WHERE question_id = $1 AND choice = $2', [qRows[0].id, result]);
     const { rows: loseBets } = await client.query('SELECT * FROM bets WHERE question_id = $1 AND choice != $2', [qRows[0].id, result]);
 
-    const winPool  = winBets.reduce((s, b) => s + b.amount, 0);
-    const total    = winPool + loseBets.reduce((s, b) => s + b.amount, 0);
+    // הקופה כולה — כולל משקל אורחים (yes_volume/no_volume כבר כוללים אותו).
+    const totalVolume = (qRows[0].yes_volume || 0) + (qRows[0].no_volume || 0);
+    // סך ההימורים האמיתיים בצד המנצח (משתמשים רשומים בלבד).
+    // אורחים מזרימים כסף לקופה אך אינם גובים — כל הקופה מתחלקת בין הזוכים האמיתיים
+    // לפי גודל ההימור שלהם.
+    const realWinStake = winBets.reduce((s, b) => s + b.amount, 0);
 
     for (const bet of winBets) {
-      const payout = winPool > 0 ? (bet.amount / winPool) * total : bet.amount;
+      let payout = realWinStake > 0
+        ? (bet.amount / realWinStake) * totalVolume
+        : bet.amount;
+      if (payout < bet.amount) payout = bet.amount; // זוכה לעולם לא מקבל פחות מהימורו
+      payout = Math.round(payout);
       await client.query('UPDATE bets SET won = 1, payout = $1 WHERE id = $2', [payout, bet.id]);
       await client.query('UPDATE users SET balance = balance + $1 WHERE id = $2', [payout, bet.user_id]);
     }

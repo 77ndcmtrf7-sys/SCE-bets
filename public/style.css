@@ -1929,3 +1929,74 @@ body::after {
   font-family: 'Space Mono', monospace;
   font-variant-numeric: tabular-nums;
 }
+
+/* ===== FLOATING BLOBS (שלב 3) ===== */
+@keyframes blob {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(40px,-30px) scale(1.12); }
+  66%     { transform: translate(-30px,25px) scale(0.92); }
+}
+.blobs {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.5;
+}
+.b1 {
+  top: -160px; right: -90px;
+  width: 460px; height: 460px;
+  background: radial-gradient(circle, var(--accent), transparent 68%);
+  animation: blob 24s ease-in-out infinite;
+}
+.b2 {
+  bottom: -200px; left: -110px;
+  width: 520px; height: 520px;
+  background: radial-gradient(circle, #ff9f0a, transparent 68%);
+  animation: blob 30s ease-in-out infinite reverse;
+}
+.b3 {
+  top: 38%; left: 44%;
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, #af52de, transparent 68%);
+  animation: blob 26s ease-in-out infinite;
+}
+/* ודא שהתוכן מעל הבלובים */
+#app { position: relative; z-index: 1; }
+
+/* עדינות יותר בלייט מוד */
+[data-theme="light"] .blob { opacity: 0.28; }
+
+/* ===== MASONRY LAYOUT (שלב 3) ===== */
+@keyframes cardPop {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.markets-grid.masonry-active {
+  display: block;
+  position: relative;
+}
+.markets-grid.masonry-active .market-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  transition: top 0.4s cubic-bezier(0.2,0.7,0.2,1),
+              left 0.4s cubic-bezier(0.2,0.7,0.2,1),
+              box-shadow 0.18s ease,
+              border-color 0.18s ease;
+  will-change: top, left;
+}
+/* ב-masonry, hover עם scale (translateY ישבור את המיקום) */
+.markets-grid.masonry-active .market-card:hover {
+  transform: scale(1.015);
+  box-shadow: var(--shadow);
+  border-color: var(--border2);
+  z-index: 2;
+}

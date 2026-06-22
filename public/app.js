@@ -218,6 +218,8 @@ async function loadMarkets(silent=false) {
 function renderMarkets(questions) {
   const grid = document.getElementById('markets-grid');
   if (!questions.length) {
+    grid.classList.remove('masonry-active');
+    grid.style.height = '';
     grid.innerHTML=`<div class="empty-state"><span class="emoji">🤔</span>אין שאלות עדיין</div>`;
     return;
   }
@@ -321,19 +323,77 @@ function renderMarkets(questions) {
     if (currentUser) openBetModal(qid);
     else showAuthOverlay();
   };
-  // אנימציית כניסה לכרטיסים
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.market-card').forEach((card, i) => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(12px)';
-      setTimeout(() => {
-        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-        card.style.opacity = '1';
-        card.style.transform = 'translateY(0)';
-      }, i * 60);
-    });
+  // פריסת masonry + אנימציית כניסה (בפריים הבא כדי שהגבהים יהיו מדויקים)
+  requestAnimationFrame(() => layoutMasonry(true));
+}
+
+// ===== MASONRY LAYOUT =====
+let _masonryRaf = null;
+
+function layoutMasonry(animateIn = false) {
+  const grid = document.getElementById('markets-grid');
+  if (!grid) return;
+  const cards = Array.from(grid.querySelectorAll('.market-card'));
+  if (!cards.length) { grid.style.height = ''; return; }
+
+  const gap = 14;
+  const containerWidth = grid.clientWidth;
+
+  const MIN_COL_WIDTH = 300;
+  let cols = Math.max(1, Math.floor((containerWidth + gap) / (MIN_COL_WIDTH + gap)));
+  if (window.innerWidth <= 600) cols = 1;
+
+  const colWidth = (containerWidth - gap * (cols - 1)) / cols;
+  const colHeights = new Array(cols).fill(0);
+
+  // עמודה אחת — flow רגיל, בלי absolute
+  if (cols === 1) {
+    grid.classList.remove('masonry-active');
+    grid.style.height = '';
+    cards.forEach(c => { c.style.top=''; c.style.left=''; c.style.width=''; });
+    if (animateIn) animateCardsIn(cards);
+    return;
+  }
+
+  grid.classList.add('masonry-active');
+
+  cards.forEach((card) => {
+    card.style.width = colWidth + 'px';
+    let shortestCol = 0;
+    for (let c = 1; c < cols; c++) {
+      if (colHeights[c] < colHeights[shortestCol]) shortestCol = c;
+    }
+    // RTL — עמודה 0 בצד ימין
+    const x = (cols - 1 - shortestCol) * (colWidth + gap);
+    const y = colHeights[shortestCol];
+    card.style.left = x + 'px';
+    card.style.top  = y + 'px';
+    colHeights[shortestCol] += card.offsetHeight + gap;
+  });
+
+  grid.style.height = Math.max(...colHeights) + 'px';
+  if (animateIn) animateCardsIn(cards);
+}
+
+function animateCardsIn(cards) {
+  cards.forEach((card, i) => {
+    const delay = Math.min(i, 12) * 45; // תקרה — כרטיסים מאוחרים לא נתקעים שקופים
+    card.style.opacity = '0';
+    card.style.animation = 'none';
+    // force reflow כדי שה-animation יופעל מחדש
+    void card.offsetWidth;
+    setTimeout(() => {
+      card.style.animation = 'cardPop 0.5s cubic-bezier(0.2,0.7,0.2,1) both';
+      // ביטחון — אם האנימציה לא רצה מסיבה כלשהי, הכרטיס נשאר גלוי
+      card.addEventListener('animationend', () => { card.style.opacity = '1'; card.style.animation = ''; }, { once: true });
+    }, delay);
   });
 }
+
+window.addEventListener('resize', () => {
+  if (_masonryRaf) cancelAnimationFrame(_masonryRaf);
+  _masonryRaf = requestAnimationFrame(() => layoutMasonry(false));
+});
 
 
 // ===== ANIMATE PCT UPDATE =====
@@ -422,13 +482,20 @@ function updateChoiceButtons() {
 function updatePayout() {
   if(!currentBetQuestion) return;
   const amount=parseFloat(document.getElementById('bet-amount').value)||0;
-  const q=currentBetQuestion, total=q.yes_volume+q.no_volume;
+  const q=currentBetQuestion;
+  // הקופה כולה אחרי שההימור ייכנס (כולל אורחים — שכבר בתוך yes_volume/no_volume)
+  const totalVolume = q.yes_volume + q.no_volume + amount;
+  // סך ההימורים האמיתיים בצד הנבחר, כולל ההימור הנוכחי
+  const realWinSide = currentBetChoice==='YES' ? (q.real_yes||0) : (q.real_no||0);
+  const realWinStake = realWinSide + amount;
   let payout;
-  if(total===0){ payout=amount*2; }
-  else {
-    const winVol=currentBetChoice==='YES'?q.yes_volume:q.no_volume;
-    payout=amount+(amount/(winVol+amount))*(total-winVol);
+  if (realWinStake > 0) {
+    // אותה נוסחה כמו בשרת: (ההימור שלך / סך ההימורים האמיתיים המנצחים) × כל הקופה
+    payout = (amount / realWinStake) * totalVolume;
+  } else {
+    payout = amount;
   }
+  if (payout < amount) payout = amount;
   document.getElementById('bet-payout-val').textContent=`${formatNum(Math.round(payout))} נק"ז`;
 }
 
