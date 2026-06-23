@@ -267,15 +267,20 @@ function renderMarkets(questions) {
     const resolvedBlock = `
       <div class="choice-blocks resolved-blocks">
         <div class="choice-block yes-block ${q.result==='YES'?'winner':'loser'}">
+          ${q.result==='YES'?'<span class="winner-check">✓</span>':''}
           <span class="choice-pct">${yesPct}%</span>
           <span class="choice-label">${q.option_yes||'כן'}</span>
         </div>
         <div class="choice-block no-block ${q.result==='NO'?'winner':'loser'}">
+          ${q.result==='NO'?'<span class="winner-check">✓</span>':''}
           <span class="choice-pct">${noPct}%</span>
           <span class="choice-label">${q.option_no||'לא'}</span>
         </div>
       </div>
-      <div class="resolved-badge ${q.result}">${q.result==='YES'?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
+      <div class="resolved-result ${q.result}">
+        <span class="resolved-result-label">התוצאה:</span>
+        <strong>${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}</strong>
+      </div>`;
 
     const catColor  = getCategoryColor(q.category);
     const catStyle  = catColor ? `style="color:${catColor}"` : '';
@@ -291,6 +296,7 @@ function renderMarkets(questions) {
     ) : '';
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" data-qid="${q.id}" data-resolved="${q.resolved?1:0}" ${cardBorderStyle}>
+      ${q.resolved ? '<div class="closed-ribbon">נסגר</div>' : ''}
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span>${instTag}</div>
       <div class="card-question">${q.question}</div>
       ${shortDesc ? `<div class="card-description">${shortDesc}</div>` : ''}
@@ -931,7 +937,8 @@ function renderAdminQuestions(questions) {
         <button class="admin-q-btn edit" onclick="openEditQuestionById(${q.id})">✏️ ערוך</button>
         ${!q.resolved?`
           <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
-          <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`:''}
+          <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`
+        :`<button class="admin-q-btn archive" onclick="archiveQuestion(${q.id})">📦 לארכיון</button>`}
         <button class="admin-q-btn delete" onclick="deleteQuestion(${q.id})">מחק</button>
       </div>
     </div>`;
@@ -1000,6 +1007,13 @@ async function deleteQuestion(id) {
   if(!confirm('למחוק שאלה זו?')) return;
   const res=await fetch(`${API}/api/questions/${id}`,{method:'DELETE',headers:authHeaders()});
   if(res.ok){showToast('נמחק','success');loadAdminQuestions();}
+}
+
+async function archiveQuestion(id) {
+  if(!confirm('להעביר את הסקר לארכיון עכשיו?')) return;
+  const res=await fetch(`${API}/api/questions/${id}/archive`,{method:'POST',headers:authHeaders()});
+  if(res.ok){showToast('הסקר הועבר לארכיון 📦','success');loadAdminQuestions();}
+  else{const d=await res.json();showToast(d.error||'שגיאה','error');}
 }
 
 // ===== REAL-TIME BALANCE =====

@@ -646,6 +646,18 @@ app.put('/api/questions/:id', adminAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- Manually move a resolved question to the archive ---
+app.post('/api/questions/:id/archive', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT resolved FROM questions WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'סקר לא נמצא' });
+    if (rows[0].resolved != 1) return res.status(400).json({ error: 'אפשר לארכב רק סקר שנסגר' });
+    // מזיז את resolved_at אל מעבר ל-24 שעות אחורה כדי שייכנס מיד לארכיון
+    await pool.query("UPDATE questions SET resolved_at = NOW() - INTERVAL '25 hours' WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // --- Archive endpoint ---
 app.get('/api/archive', async (req, res) => {
   try {
