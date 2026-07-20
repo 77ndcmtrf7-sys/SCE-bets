@@ -409,14 +409,57 @@ body::after {
   .section { padding: 16px 14px 100px !important; }
   .section-header h1 { font-size: 24px; }
 
-  /* Cards */
+  /* Cards — compact mobile density */
   .markets-grid { grid-template-columns: 1fr !important; gap: 10px; }
-  .market-card { padding: 12px 14px; }
-  .card-question { font-size: 14px; margin-bottom: 4px; }
-  .card-category { margin-bottom: 0; }
+  .market-card { padding: 12px 13px; }
+  .card-tags-row { margin-bottom: 5px; }
+  .card-category { margin-bottom: 0; font-size: 10px; }
+  .dept-tag { font-size: 10px; padding: 2px 7px; }
+  .card-question { font-size: 14px; margin-bottom: 5px; }
+  .card-description {
+    font-size: 11px;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .card-bar-wrap { margin-bottom: 6px; }
-  .card-footer { margin-top: 8px; padding-top: 8px; }
   .bet-btn { padding: 7px 16px; font-size: 13px; }
+
+  /* Choice blocks — lower profile, same info, less height */
+  .choice-blocks { gap: 6px; margin-bottom: 8px; }
+  .choice-block { padding: 10px 8px; gap: 3px; }
+  .choice-pct { font-size: 18px; }
+  .choice-label { font-size: 10px; }
+  .winner-check { top: 6px; right: 8px; font-size: 13px; }
+  .resolved-result { padding: 7px 12px; margin-top: 8px; font-size: 13px; }
+  .resolved-result strong { font-size: 14px; }
+
+  /* Footer — נפח + bets + דדליין בשורה אחת מאוחדת */
+  .card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .card-footer-top { display: contents; }
+  .card-volume, .card-stats-row, .card-deadline {
+    font-size: 11px;
+    margin: 0 !important;
+    padding: 0;
+  }
+  .card-stats-row { gap: 4px; }
+  .card-deadline { display: flex; align-items: center; }
+  .card-stats-row::before,
+  .card-deadline::before {
+    content: '·';
+    color: var(--text3);
+    margin-inline-end: 6px;
+  }
 
   /* Suggest button */
   .suggest-btn-wrap { margin-top: 20px; }
@@ -1204,11 +1247,8 @@ body::after {
 .card-stats-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
-  padding: 6px 0 2px;
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
   direction: ltr;
 }
 
