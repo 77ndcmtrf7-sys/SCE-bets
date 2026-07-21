@@ -2206,3 +2206,53 @@ body::after {
   padding: 6px 10px;
   margin: 4px 0 8px;
 }
+
+/* ===== LOCKED SURVEY (reversible — blocks betting, doesn't resolve) ===== */
+.lock-ribbon {
+  position: absolute;
+  top: 16px;
+  left: -38px;
+  transform: rotate(-45deg);
+  background: linear-gradient(135deg, #f0b429, #ad7a12);
+  color: #1a1200;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 5px 40px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.market-card.locked { cursor: default; }
+
+.choice-blocks.locked-blocks .choice-block.locked {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+  cursor: default;
+  pointer-events: none;
+}
+.choice-blocks.locked-blocks .choice-block.locked:hover {
+  transform: none;
+  box-shadow: none;
+  filter: grayscale(0.5);
+}
+
+.number-guess-block.locked-number {
+  background: linear-gradient(145deg, rgba(240,180,41,0.14), rgba(240,180,41,0.06));
+  border-color: rgba(240,180,41,0.35);
+  opacity: 0.85;
+}
+.number-guess-block.locked-number .number-guess-cta { color: #ad7a12; }
+
+.card-deadline.locked-label {
+  color: #ad7a12;
+  font-weight: 700;
+}
+
+.admin-q-btn.lock {
+  background: rgba(240,180,41,0.12);
+  color: #ad7a12;
+  border: 1px solid rgba(240,180,41,0.35);
+}
+.admin-q-btn.lock:hover { background: rgba(240,180,41,0.22); }

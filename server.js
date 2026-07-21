@@ -69,6 +69,7 @@ initDB().then(async () => {
   try { await pool.query("ALTER TABLE bets ALTER COLUMN choice DROP NOT NULL"); } catch(e) {}
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS question_type TEXT DEFAULT 'binary'"); } catch(e) {}
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS number_unit TEXT DEFAULT ''"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS locked INTEGER DEFAULT 0"); } catch(e) {}
   console.log('DB ready');
 }).catch(console.error);
 
@@ -109,6 +110,21 @@ async function adminAuth(req, res, next) {
     if (!req.user.is_admin) return res.status(403).json({ error: 'אין הרשאות מנהל' });
     next();
   });
+}
+
+// אימות אופציונלי — ממלא req.user אם יש טוקן תקין, אבל לא דוחה בקשות בלי טוקן.
+// משמש נתיבים שגם אורחים וגם משתמשים רשומים יכולים לגשת אליהם, אך שצריכים
+// לדעת מי המשתמש (אם קיים) כדי להתאים את ההתנהגות.
+async function optionalAuth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header) { req.user = null; return next(); }
+  const token = header.split(' ')[1];
+  try {
+    const payload = jwt.verify(token, SECRET);
+    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [payload.id]);
+    req.user = rows[0] || null;
+  } catch { req.user = null; }
+  next();
 }
 
 function userSafe(u) {
@@ -153,8 +169,9 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/me', auth, (req, res) => res.json(userSafe(req.user)));
 
-app.get('/api/questions', async (req, res) => {
+app.get('/api/questions', optionalAuth, async (req, res) => {
   try {
+    await autoLockExpiredQuestions();
     const showAll = req.query.all && req.user?.is_admin;
     const sql = showAll
       ? 'SELECT * FROM questions ORDER BY created_at DESC'
@@ -167,6 +184,23 @@ app.get('/api/questions', async (req, res) => {
     res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
+// נועל אוטומטית סקרים פעילים שעבר מועד הסגירה שלהם, אבל טרם נסגרו בפועל.
+// נעילה שונה מסגירה: היא הפיכה (המנהל יכול לפתוח אותה מחדש) ולא קובעת תוצאה/משלמת דבר.
+// "deadline" נשמר כטקסט בזמן מקומי (ישראל) בלי אזור זמן, לכן הפרשנות מפורשת ל-Asia/Jerusalem.
+async function autoLockExpiredQuestions() {
+  try {
+    await pool.query(`
+      UPDATE questions
+      SET locked = 1
+      WHERE resolved = 0
+        AND locked = 0
+        AND deadline IS NOT NULL
+        AND deadline <> ''
+        AND (deadline::timestamp AT TIME ZONE 'Asia/Jerusalem') < NOW()
+    `);
+  } catch(e) { console.error('autoLockExpiredQuestions error:', e.message); }
+}
 
 // מוסיף לכל שאלה real_yes / real_no — סך ההימורים האמיתיים (מ-bets) בכל צד.
 // משמש את הלקוח כדי להציג רווח פוטנציאלי מדויק (זהה לחישוב התשלום בשרת).
@@ -211,6 +245,7 @@ async function attachRealStakes(questions) {
 
 app.get('/api/questions/:id', auth, async (req, res) => {
   try {
+    await autoLockExpiredQuestions();
     const { rows } = await pool.query('SELECT * FROM questions WHERE id = $1', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'שאלה לא נמצאה' });
     await attachRealStakes(rows);
@@ -237,11 +272,24 @@ app.post('/api/bet', auth, async (req, res) => {
   try {
     const { question_id, choice, amount, guess_number } = req.body;
     if (!amount || amount < 10) return res.status(400).json({ error: 'מינימום 10 נק"ז' });
-    if (amount > req.user.balance) return res.status(400).json({ error: 'אין מספיק נק"ז' });
 
     const { rows: qRows } = await client.query('SELECT * FROM questions WHERE id = $1', [question_id]);
     if (!qRows[0]) return res.status(404).json({ error: 'שאלה לא נמצאה' });
     if (qRows[0].resolved) return res.status(400).json({ error: 'השאלה כבר נסגרה' });
+
+    // נעילה — ידנית ע"י מנהל, או אוטומטית אם מועד הסגירה עבר
+    let isLocked = qRows[0].locked === 1;
+    if (!isLocked && qRows[0].deadline) {
+      const { rows: lockCheck } = await client.query(
+        `SELECT (deadline::timestamp AT TIME ZONE 'Asia/Jerusalem') < NOW() AS expired FROM questions WHERE id = $1`,
+        [question_id]
+      );
+      if (lockCheck[0]?.expired) {
+        await client.query('UPDATE questions SET locked = 1 WHERE id = $1', [question_id]);
+        isLocked = true;
+      }
+    }
+    if (isLocked) return res.status(400).json({ error: 'הסקר נעול להימורים כרגע' });
 
     const qType = qRows[0].question_type || 'binary';
     let num = null;
@@ -256,6 +304,18 @@ app.post('/api/bet', auth, async (req, res) => {
     }
 
     await client.query('BEGIN');
+
+    // ניכוי אטומי של היתרה בתוך אותה קריאה — מונע מצב שבו שתי בקשות הימור
+    // סמוכות (דאבל-קליק, שני טאבים) שתיהן עוברות את הבדיקה לפני שמישהי מהן מנכה בפועל.
+    const { rows: balRows } = await client.query(
+      'UPDATE users SET balance = balance - $1 WHERE id = $2 AND balance >= $1 RETURNING balance',
+      [amount, req.user.id]
+    );
+    if (!balRows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'אין מספיק נק"ז' });
+    }
+
     if (qType === 'closest_number') {
       await client.query('INSERT INTO bets (user_id, question_id, guess_number, amount) VALUES ($1,$2,$3,$4)', [req.user.id, question_id, num, amount]);
     } else {
@@ -263,10 +323,8 @@ app.post('/api/bet', auth, async (req, res) => {
       if (choice === 'YES') await client.query('UPDATE questions SET yes_volume = yes_volume + $1, yes_count = yes_count + 1 WHERE id = $2', [amount, question_id]);
       else await client.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [amount, question_id]);
     }
-    await client.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [amount, req.user.id]);
     await client.query('COMMIT');
 
-    const { rows: uRows } = await client.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
     let logMsg;
     if (qType === 'closest_number') {
       const unit = qRows[0].number_unit ? ` ${qRows[0].number_unit}` : '';
@@ -276,7 +334,7 @@ app.post('/api/bet', auth, async (req, res) => {
       logMsg = `${req.user.display_name} הימר ${amount} נק"ז על "${qRows[0].question}" — ${choiceLabel}`;
     }
     logActivity('bet', logMsg);
-    res.json({ success: true, new_balance: uRows[0].balance });
+    res.json({ success: true, new_balance: balRows[0].balance });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
 });
@@ -488,7 +546,7 @@ initSuggestions().then(async () => {
 }).catch(console.error);
 
 // Submit suggestion
-app.post('/api/suggestions', async (req, res) => {
+app.post('/api/suggestions', optionalAuth, async (req, res) => {
   try {
     const { question, category, option_yes, option_no, department, description, deadline, institution, question_type, number_unit } = req.body;
     if (!question || question.trim().length < 5)
@@ -561,6 +619,9 @@ app.post('/api/guest-vote', async (req, res) => {
     const q = await pool.query('SELECT * FROM questions WHERE id = $1', [question_id]);
     if (!q.rows[0]) return res.status(404).json({ error: 'סקר לא נמצא' });
     if (q.rows[0].resolved) return res.status(400).json({ error: 'הסקר נסגר' });
+    if (q.rows[0].locked) return res.status(400).json({ error: 'הסקר נעול כרגע' });
+    if (q.rows[0].question_type === 'closest_number')
+      return res.status(400).json({ error: 'סקרי ניחוש מספר פתוחים למשתמשים רשומים בלבד' });
 
     // Check already voted
     const existing = await pool.query(
@@ -584,14 +645,6 @@ app.post('/api/guest-vote', async (req, res) => {
     const choiceLabelGuest = choice === 'YES' ? (q.rows[0].option_yes || 'כן') : (q.rows[0].option_no || 'לא');
     logActivity('guest_vote', `אורח הצביע על "${q.rows[0].question}" — ${choiceLabelGuest}`);
     res.json({ success: true });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-// Allow unauthenticated access to questions list and complaints
-app.get('/api/questions/public', async (req, res) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM questions ORDER BY resolved ASC, created_at DESC');
-    res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -624,68 +677,6 @@ app.post('/api/me/update', auth, async (req, res) => {
       logActivity('rename', `${req.user.display_name} שינה שם ל-${display_name}`);
     }
     res.json({ display_name: rows[0].display_name });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- Question chart data from activity_log ---
-app.get('/api/questions/:id/chart', async (req, res) => {
-  try {
-    const qid = req.params.id;
-    const { rows: qRows } = await pool.query('SELECT * FROM questions WHERE id=$1', [qid]);
-    if (!qRows[0]) return res.status(404).json({ error: 'לא נמצא' });
-    const q = qRows[0];
-
-    // שליפת כל הימורים מה-log
-    const { rows: logs } = await pool.query(
-      `SELECT message, created_at FROM activity_log
-       WHERE (type='bet' OR type='guest_vote')
-         AND message LIKE $1
-       ORDER BY created_at ASC`,
-      [`%"${q.question}"%`]
-    );
-
-    // שחזור האחוזים לאורך זמן
-    let yesVol = 0, noVol = 0;
-    const points = [];
-
-    for (const log of logs) {
-      const msg = log.message;
-      // זיהוי צד
-      const isYes = msg.includes(`— ${q.option_yes || 'כן'}`);
-      const isNo  = msg.includes(`— ${q.option_no  || 'לא'}`);
-      if (!isYes && !isNo) continue;
-
-      // חילוץ סכום (רק הימורים רשומים, לא אורחים)
-      const amountMatch = msg.match(/הימר ([\d,]+) נק/);
-      const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g,'')) : 50;
-
-      if (isYes) yesVol += amount;
-      else       noVol  += amount;
-
-      const total = yesVol + noVol;
-      points.push({
-        time: log.created_at,
-        yes:  total > 0 ? Math.round((yesVol / total) * 100) : 50,
-        no:   total > 0 ? Math.round((noVol  / total) * 100) : 50,
-      });
-    }
-
-    // נקודת התחלה
-    if (points.length > 0) {
-      points.unshift({ time: q.created_at, yes: 50, no: 50 });
-    }
-
-    // נקודת סיום (מצב נוכחי)
-    const curTotal = q.yes_volume + q.no_volume;
-    if (points.length > 0) {
-      points.push({
-        time: q.resolved ? (points[points.length-1]?.time || q.created_at) : new Date().toISOString(),
-        yes:  curTotal > 0 ? Math.round((q.yes_volume / curTotal) * 100) : 50,
-        no:   curTotal > 0 ? Math.round((q.no_volume  / curTotal) * 100) : 50,
-      });
-    }
-
-    res.json({ points, option_yes: q.option_yes || 'כן', option_no: q.option_no || 'לא' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -751,6 +742,26 @@ app.post('/api/questions/:id/archive', adminAuth, async (req, res) => {
     if (rows[0].resolved != 1) return res.status(400).json({ error: 'אפשר לארכב רק סקר שנסגר' });
     // מזיז את resolved_at אל מעבר ל-24 שעות אחורה כדי שייכנס מיד לארכיון
     await pool.query("UPDATE questions SET resolved_at = NOW() - INTERVAL '25 hours' WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Lock / unlock a question (reversible; blocks betting without resolving) ---
+app.post('/api/questions/:id/lock', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT resolved FROM questions WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'סקר לא נמצא' });
+    if (rows[0].resolved == 1) return res.status(400).json({ error: 'אי אפשר לנעול סקר שכבר נסגר' });
+    await pool.query('UPDATE questions SET locked = 1 WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/questions/:id/unlock', adminAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id FROM questions WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'סקר לא נמצא' });
+    await pool.query('UPDATE questions SET locked = 0 WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });

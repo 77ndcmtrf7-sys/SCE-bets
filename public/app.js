@@ -46,7 +46,17 @@ window.onload = () => {
     loadMarkets();
     updateGuestUI();
   }
+  startMarketsPolling();
 };
+
+// רענון שקט תקופתי לדף השוק — מעדכן אחוזים/ממוצעים בלי לבנות מחדש את כל הכרטיסים,
+// ורק כשמסך השוק פעיל בפועל (כדי לא לבזבז בקשות כשעוברים ללשוניות אחרות).
+function startMarketsPolling() {
+  setInterval(() => {
+    const section = document.getElementById('section-markets');
+    if (section && section.classList.contains('active')) loadMarkets(true);
+  }, 15000);
+}
 
 async function tryAutoLogin() {
   const res = await fetch(`${API}/api/me`, { headers: authHeaders() });
@@ -208,11 +218,29 @@ async function loadMarkets(silent=false) {
   const questions = data.questions || [];
   _allQuestions = questions;
   const filtered = _currentInstitution === 'all' ? questions : questions.filter(q => (q.institution || 'כללי') === _currentInstitution);
-  if (silent && document.querySelectorAll('.market-card').length === filtered.length) {
+  const canPatchSilently = silent && canSilentlyPatchCards(filtered);
+  if (canPatchSilently) {
     updateCardPcts(filtered);
   } else {
     renderMarkets(filtered);
   }
+}
+
+// בודק אם אפשר לעדכן רק את הטקסט (אחוזים/ממוצע) בלי לבנות מחדש את כל הכרטיסים.
+// אם מספר הכרטיסים השתנה, או שסקר כלשהו עבר למצב "נעול"/"נסגר" מאז הרינדור האחרון,
+// אין לעדכן בשקט — צריך רינדור מלא כדי שהריבונים/הבלוקים המושבתים יופיעו נכון.
+function canSilentlyPatchCards(questions) {
+  const cards = document.querySelectorAll('.market-card');
+  if (cards.length !== questions.length) return false;
+  for (const q of questions) {
+    const card = document.querySelector(`.market-card[data-qid="${q.id}"]`);
+    if (!card) return false;
+    const domResolved = card.dataset.resolved === '1';
+    const domLocked    = card.dataset.locked === '1';
+    const isLockedNow  = q.locked === 1 && !q.resolved;
+    if (domResolved !== !!q.resolved || domLocked !== isLockedNow) return false;
+  }
+  return true;
 }
 
 function renderMarkets(questions) {
@@ -225,20 +253,23 @@ function renderMarkets(questions) {
   }
   grid.innerHTML = questions.map(q=>{
     const isNumberType = q.question_type === 'closest_number';
+    const isLocked = q.locked === 1 && !q.resolved;
     const total   = isNumberType ? (q.number_pool||0) : (q.yes_volume + q.no_volume);
     const yesPct  = total > 0 && !isNumberType ? Math.round((q.yes_volume / total) * 100) : 50;
     const noPct   = 100 - yesPct;
     const dl      = deadlineInfo(q.deadline);
-    const showCountdown = q.deadline && !q.resolved &&
+    const showCountdown = !isLocked && q.deadline && !q.resolved &&
       (new Date(q.deadline) - Date.now()) < 86400000 &&
       (new Date(q.deadline) - Date.now()) > 0;
-    const dlHtml = dl
-      ? `<div class="card-deadline ${dl.cls}">
-           ${showCountdown
-             ? `<span class="card-countdown" data-deadline="${q.deadline}" data-id="${q.id}">⏱ ...</span>`
-             : `⏱ ${dl.text}`}
-         </div>`
-      : '';
+    const dlHtml = isLocked
+      ? `<div class="card-deadline locked-label">🔒 נעול להימורים</div>`
+      : dl
+        ? `<div class="card-deadline ${dl.cls}">
+             ${showCountdown
+               ? `<span class="card-countdown" data-deadline="${q.deadline}" data-id="${q.id}">⏱ ...</span>`
+               : `⏱ ${dl.text}`}
+           </div>`
+        : '';
     const deptTag = q.department ? `<span class="dept-tag">${q.department}</span>` : '';
 
     const numUnit = q.number_unit ? ` ${q.number_unit}` : '';
@@ -248,9 +279,9 @@ function renderMarkets(questions) {
         <div class="number-guess-icon">🔢</div>
         <div class="number-guess-body">
           <span class="number-guess-cta">לחצו כדי לנחש את המספר</span>
-          ${q.number_count > 0
-            ? `<span class="number-guess-stat">ממוצע הניחושים עד כה: <strong>${formatMaybeDecimal(q.number_avg)}${numUnit}</strong> · ${q.number_count} ניחושים</span>`
-            : `<span class="number-guess-stat">היו הראשונים לנחש! 🎯</span>`}
+          <span class="number-guess-stat number-guess-stat-live" data-qid="${q.id}">${q.number_count > 0
+            ? `ממוצע הניחושים עד כה: <strong>${formatMaybeDecimal(q.number_avg)}${numUnit}</strong> · ${q.number_count} ניחושים`
+            : `היו הראשונים לנחש! 🎯`}</span>
         </div>
       </div>`;
 
@@ -260,6 +291,29 @@ function renderMarkets(questions) {
         <div class="number-guess-body">
           <span class="number-guess-cta">המספר הנכון היה</span>
           <span class="number-guess-result">${formatMaybeDecimal(q.correct_number)}${numUnit}</span>
+        </div>
+      </div>`;
+
+    const lockedBinaryBlock = `
+      <div class="choice-blocks locked-blocks">
+        <div class="choice-block yes-block locked">
+          <span class="choice-pct">${yesPct}%</span>
+          <span class="choice-label">${q.option_yes||'כן'}</span>
+        </div>
+        <div class="choice-block no-block locked">
+          <span class="choice-pct">${noPct}%</span>
+          <span class="choice-label">${q.option_no||'לא'}</span>
+        </div>
+      </div>`;
+
+    const lockedNumberBlock = `
+      <div class="number-guess-block locked-number">
+        <div class="number-guess-icon">🔒</div>
+        <div class="number-guess-body">
+          <span class="number-guess-cta">נעול להימורים כרגע</span>
+          ${q.number_count > 0
+            ? `<span class="number-guess-stat">ממוצע הניחושים: <strong>${formatMaybeDecimal(q.number_avg)}${numUnit}</strong> · ${q.number_count} ניחושים</span>`
+            : `<span class="number-guess-stat">אף אחד עדיין לא ניחש</span>`}
         </div>
       </div>`;
 
@@ -317,9 +371,11 @@ function renderMarkets(questions) {
       ? q.description.split('\n')[0].slice(0,80) + '...'
       : q.description.split('\n')[0] + (q.description.includes('\n') || q.description.length > 80 ? '...' : '')
     ) : '';
-    const mainBlock = isNumberType
-      ? (q.resolved ? numberResolvedBlock : numberBlock)
-      : (q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest));
+    const mainBlock = q.resolved
+      ? (isNumberType ? numberResolvedBlock : resolvedBlock)
+      : isLocked
+        ? (isNumberType ? lockedNumberBlock : lockedBinaryBlock)
+        : (isNumberType ? numberBlock : (currentUser ? betBlocksUser : betBlocksGuest));
 
     const statsHtml = isNumberType
       ? `<div class="card-stats-row" dir="rtl"><span class="stat-yes">${q.number_count||0}</span><span class="stat-label">ניחושים</span></div>`
@@ -331,8 +387,8 @@ function renderMarkets(questions) {
         </div>`;
 
     return `
-    <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" data-qid="${q.id}" data-resolved="${q.resolved?1:0}" ${cardBorderStyle}>
-      ${q.resolved ? '<div class="closed-ribbon">נסגר</div>' : ''}
+    <div class="market-card ${q.resolved?'resolved':''} ${isLocked?'locked':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" data-qid="${q.id}" data-resolved="${q.resolved?1:0}" data-locked="${isLocked?1:0}" ${cardBorderStyle}>
+      ${q.resolved ? '<div class="closed-ribbon">נסגר</div>' : isLocked ? '<div class="lock-ribbon">🔒 נעול</div>' : ''}
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span>${instTag}</div>
       <div class="card-question">${q.question}</div>
       ${shortDesc ? `<div class="card-description">${shortDesc}</div>` : ''}
@@ -355,6 +411,7 @@ function renderMarkets(questions) {
     // אל תפתח modal אם לחצו על choice-block
     if (e.target.closest('.choice-block')) return;
     if (card.dataset.resolved === '1') return;
+    if (card.dataset.locked === '1') { showToast('הסקר נעול להימורים כרגע 🔒', 'error'); return; }
     const qid = parseInt(card.dataset.qid);
     if (!qid) return;
     if (currentUser) openBetModal(qid);
@@ -453,6 +510,16 @@ function animatePctChange(el, newVal) {
 
 function updateCardPcts(questions) {
   questions.forEach(q => {
+    if (q.question_type === 'closest_number') {
+      const statEl = document.querySelector(`.number-guess-stat-live[data-qid="${q.id}"]`);
+      if (statEl) {
+        const numUnit = q.number_unit ? ` ${q.number_unit}` : '';
+        statEl.innerHTML = q.number_count > 0
+          ? `ממוצע הניחושים עד כה: <strong>${formatMaybeDecimal(q.number_avg)}${numUnit}</strong> · ${q.number_count} ניחושים`
+          : `היו הראשונים לנחש! 🎯`;
+      }
+      return;
+    }
     const total  = q.yes_volume + q.no_volume;
     const yesPct = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
     const noPct  = 100 - yesPct;
@@ -469,6 +536,11 @@ async function openBetModal(questionId,choice='YES') {
   const res  = await fetch(`${API}/api/questions/${questionId}`,{headers:authHeaders()});
   const data = await res.json();
   if (!res.ok) return;
+  if (data.question.locked && !data.question.resolved) {
+    showToast('הסקר נעול להימורים כרגע 🔒', 'error');
+    loadMarkets();
+    return;
+  }
   currentBetQuestion=data.question; currentBetChoice=choice;
   const catColor = getCategoryColor(data.question.category);
   const catTagEl = document.getElementById('modal-category-tag');
@@ -1041,11 +1113,18 @@ function renderAdminQuestions(questions) {
     const unit = q.number_unit ? ` ${q.number_unit}` : '';
 
     let statusText;
-    if (!q.resolved) statusText = 'פעיל';
+    if (!q.resolved && q.locked) statusText = '🔒 נעול להימורים';
+    else if (!q.resolved) statusText = 'פעיל';
     else if (isNumber) statusText = `נסגר — המספר הנכון: ${formatMaybeDecimal(q.correct_number)}${unit}`;
     else statusText = `נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`;
 
     const metaExtra = isNumber ? ` · ${q.number_count||0} ניחושים` : '';
+
+    const lockBtnHtml = !q.resolved
+      ? (q.locked
+          ? `<button class="admin-q-btn lock" onclick="unlockQuestion(${q.id})">🔓 פתח נעילה</button>`
+          : `<button class="admin-q-btn lock" onclick="lockQuestion(${q.id})">🔒 נעל</button>`)
+      : '';
 
     let actionsHtml;
     if (!q.resolved && isNumber) {
@@ -1065,11 +1144,24 @@ function renderAdminQuestions(questions) {
       <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${metaExtra}${dl?` · סגירה: ${dl}`:''}  · ${statusText}</div>
       <div class="admin-q-actions">
         <button class="admin-q-btn edit" onclick="openEditQuestionById(${q.id})">✏️ ערוך</button>
+        ${lockBtnHtml}
         ${actionsHtml}
         <button class="admin-q-btn delete" onclick="deleteQuestion(${q.id})">מחק</button>
       </div>
     </div>`;
   }).join('');
+}
+
+async function lockQuestion(id) {
+  const res = await fetch(`${API}/api/questions/${id}/lock`, { method: 'POST', headers: authHeaders() });
+  if (res.ok) { showToast('הסקר ננעל 🔒', 'success'); loadAdminQuestions(); loadMarkets(); }
+  else { const d = await res.json(); showToast(d.error || 'שגיאה', 'error'); }
+}
+
+async function unlockQuestion(id) {
+  const res = await fetch(`${API}/api/questions/${id}/unlock`, { method: 'POST', headers: authHeaders() });
+  if (res.ok) { showToast('הנעילה הוסרה 🔓', 'success'); loadAdminQuestions(); loadMarkets(); }
+  else { const d = await res.json(); showToast(d.error || 'שגיאה', 'error'); }
 }
 
 async function resolveNumberQuestion(id) {
