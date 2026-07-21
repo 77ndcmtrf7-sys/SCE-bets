@@ -1102,6 +1102,16 @@ async function loadAdminQuestions() {
 }
 
 let _adminQuestions = [];
+
+// משקף בדיוק את לוגיקת הסינון של /api/archive בשרת — כדי לדעת אם שאלה כבר
+// בארכיון בפועל (ולכן כפתור "לארכיון" מיותר ומטעה) או שרק נסגרה עכשיו.
+function isQuestionArchived(q) {
+  if (!q.resolved) return false;
+  if (!q.resolved_at) return true; // רשומות ישנות בלי resolved_at נחשבות בארכיון מיד
+  const resolvedAt = new Date(q.resolved_at);
+  return (Date.now() - resolvedAt.getTime()) > 24 * 60 * 60 * 1000;
+}
+
 function renderAdminQuestions(questions) {
   _adminQuestions = questions;
   const list=document.getElementById('admin-questions-list');
@@ -1111,12 +1121,17 @@ function renderAdminQuestions(questions) {
     const total = isNumber ? (q.number_pool||0) : (q.yes_volume+q.no_volume);
     const dl=q.deadline?new Date(q.deadline).toLocaleString('he-IL'):null;
     const unit = q.number_unit ? ` ${q.number_unit}` : '';
+    const archived = isQuestionArchived(q);
 
     let statusText;
     if (!q.resolved && q.locked) statusText = '🔒 נעול להימורים';
     else if (!q.resolved) statusText = 'פעיל';
-    else if (isNumber) statusText = `נסגר — המספר הנכון: ${formatMaybeDecimal(q.correct_number)}${unit}`;
-    else statusText = `נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`;
+    else {
+      const resultText = isNumber
+        ? `המספר הנכון: ${formatMaybeDecimal(q.correct_number)}${unit}`
+        : (q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא'));
+      statusText = archived ? `📦 בארכיון — ${resultText}` : `נסגר — ${resultText}`;
+    }
 
     const metaExtra = isNumber ? ` · ${q.number_count||0} ניחושים` : '';
 
@@ -1135,8 +1150,10 @@ function renderAdminQuestions(questions) {
       actionsHtml = `
         <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
         <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`;
-    } else {
+    } else if (!archived) {
       actionsHtml = `<button class="admin-q-btn archive" onclick="archiveQuestion(${q.id})">📦 לארכיון</button>`;
+    } else {
+      actionsHtml = '';
     }
 
     return `<div class="admin-q-item">

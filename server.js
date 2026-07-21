@@ -188,6 +188,8 @@ app.get('/api/questions', optionalAuth, async (req, res) => {
 // נועל אוטומטית סקרים פעילים שעבר מועד הסגירה שלהם, אבל טרם נסגרו בפועל.
 // נעילה שונה מסגירה: היא הפיכה (המנהל יכול לפתוח אותה מחדש) ולא קובעת תוצאה/משלמת דבר.
 // "deadline" נשמר כטקסט בזמן מקומי (ישראל) בלי אזור זמן, לכן הפרשנות מפורשת ל-Asia/Jerusalem.
+// בדיקת regex לפני ה-cast מונעת מצב שבו ערך deadline פגום יחיד גורם ל-UPDATE כולו
+// (על כל השאלות) להיכשל בבת אחת — ב-Postgres כשל cast בשורה אחת פוסל את כל הפקודה.
 async function autoLockExpiredQuestions() {
   try {
     await pool.query(`
@@ -196,7 +198,7 @@ async function autoLockExpiredQuestions() {
       WHERE resolved = 0
         AND locked = 0
         AND deadline IS NOT NULL
-        AND deadline <> ''
+        AND deadline ~ '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}'
         AND (deadline::timestamp AT TIME ZONE 'Asia/Jerusalem') < NOW()
     `);
   } catch(e) { console.error('autoLockExpiredQuestions error:', e.message); }
@@ -279,7 +281,8 @@ app.post('/api/bet', auth, async (req, res) => {
 
     // נעילה — ידנית ע"י מנהל, או אוטומטית אם מועד הסגירה עבר
     let isLocked = qRows[0].locked === 1;
-    if (!isLocked && qRows[0].deadline) {
+    const DEADLINE_FORMAT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+    if (!isLocked && qRows[0].deadline && DEADLINE_FORMAT.test(qRows[0].deadline)) {
       const { rows: lockCheck } = await client.query(
         `SELECT (deadline::timestamp AT TIME ZONE 'Asia/Jerusalem') < NOW() AS expired FROM questions WHERE id = $1`,
         [question_id]
