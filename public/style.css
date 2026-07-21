@@ -2122,3 +2122,87 @@ body::after {
   border: 1px solid rgba(124,92,255,0.3);
 }
 .admin-q-btn.archive:hover { background: rgba(124,92,255,0.22); }
+
+/* ===== ADMIN — closest_number type ===== */
+.admin-q-type-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary, #7c5cff);
+  background: rgba(124,92,255,0.12);
+  border-radius: 20px;
+  padding: 1px 8px;
+  margin-inline-start: 6px;
+  vertical-align: middle;
+}
+.admin-input-sm {
+  width: 140px;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+}
+
+/* ===== NUMBER GUESS BLOCK (closest_number type) ===== */
+.number-guess-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius, 14px);
+  background: linear-gradient(145deg, rgba(124,92,255,0.14), rgba(255,92,171,0.08));
+  border: 1px solid rgba(124,92,255,0.3);
+}
+.number-guess-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.number-guess-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.number-guess-cta {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.number-guess-stat {
+  font-size: 12px;
+  color: var(--text2);
+}
+.number-guess-stat strong {
+  color: var(--primary, #7c5cff);
+  font-family: 'Space Mono', monospace;
+}
+.number-guess-block.resolved-number {
+  background: linear-gradient(145deg, rgba(124,92,255,0.22), rgba(255,92,171,0.14));
+  border-color: rgba(124,92,255,0.5);
+}
+.number-guess-result {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary, #7c5cff);
+  font-family: 'Space Mono', monospace;
+}
+
+@media (max-width: 600px) {
+  .number-guess-block { padding: 10px 12px; gap: 9px; }
+  .number-guess-icon { font-size: 20px; }
+  .number-guess-cta { font-size: 12px; }
+  .number-guess-stat { font-size: 10px; }
+  .number-guess-result { font-size: 16px; }
+}
+
+/* ===== EDIT QUESTION — fixed type badge ===== */
+.edit-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary, #7c5cff);
+  background: rgba(124,92,255,0.1);
+  border: 1px dashed rgba(124,92,255,0.35);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 4px 0 8px;
+}

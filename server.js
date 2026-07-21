@@ -62,6 +62,13 @@ initDB().then(async () => {
   try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ"); } catch(e) {}
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT ''"); } catch(e) {}
   try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS deadline TEXT DEFAULT NULL"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS question_type TEXT DEFAULT 'binary'"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS correct_number REAL"); } catch(e) {}
+  try { await pool.query("ALTER TABLE questions ADD COLUMN IF NOT EXISTS number_unit TEXT DEFAULT ''"); } catch(e) {}
+  try { await pool.query("ALTER TABLE bets ADD COLUMN IF NOT EXISTS guess_number REAL"); } catch(e) {}
+  try { await pool.query("ALTER TABLE bets ALTER COLUMN choice DROP NOT NULL"); } catch(e) {}
+  try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS question_type TEXT DEFAULT 'binary'"); } catch(e) {}
+  try { await pool.query("ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS number_unit TEXT DEFAULT ''"); } catch(e) {}
   console.log('DB ready');
 }).catch(console.error);
 
@@ -167,18 +174,38 @@ async function attachRealStakes(questions) {
   if (!questions.length) return;
   const ids = questions.map(q => q.id);
   const { rows } = await pool.query(
-    `SELECT question_id, choice, COALESCE(SUM(amount),0) AS stake
+    `SELECT question_id, choice, COALESCE(SUM(amount),0) AS stake, COUNT(*) AS cnt
      FROM bets WHERE question_id = ANY($1) GROUP BY question_id, choice`,
     [ids]
   );
   const map = {};
   for (const r of rows) {
-    if (!map[r.question_id]) map[r.question_id] = { YES: 0, NO: 0 };
-    map[r.question_id][r.choice] = parseFloat(r.stake);
+    if (!map[r.question_id]) map[r.question_id] = { YES: 0, NO: 0, total: 0, count: 0 };
+    if (r.choice === 'YES' || r.choice === 'NO') map[r.question_id][r.choice] = parseFloat(r.stake);
+    map[r.question_id].total += parseFloat(r.stake);
+    map[r.question_id].count += parseInt(r.cnt);
   }
+
+  // ממוצע ניחושים — רק לשאלות מסוג closest_number, ורק אגרגט (לא חושף ניחוש בודד)
+  const numberIds = questions.filter(q => q.question_type === 'closest_number').map(q => q.id);
+  const avgMap = {};
+  if (numberIds.length) {
+    const { rows: avgRows } = await pool.query(
+      `SELECT question_id, AVG(guess_number) AS avg_guess
+       FROM bets WHERE question_id = ANY($1) AND guess_number IS NOT NULL GROUP BY question_id`,
+      [numberIds]
+    );
+    for (const r of avgRows) avgMap[r.question_id] = parseFloat(r.avg_guess);
+  }
+
   for (const q of questions) {
     q.real_yes = map[q.id]?.YES || 0;
     q.real_no  = map[q.id]?.NO  || 0;
+    if (q.question_type === 'closest_number') {
+      q.number_pool  = map[q.id]?.total || 0;
+      q.number_count = map[q.id]?.count || 0;
+      q.number_avg   = avgMap[q.id] ?? null;
+    }
   }
 }
 
@@ -193,11 +220,12 @@ app.get('/api/questions/:id', auth, async (req, res) => {
 
 app.post('/api/questions', adminAuth, async (req, res) => {
   try {
-    const { question, category, deadline, option_yes, option_no, description, institution } = req.body;
+    const { question, category, deadline, option_yes, option_no, description, institution, question_type, number_unit } = req.body;
     if (!question) return res.status(400).json({ error: 'חסר טקסט שאלה' });
+    const qType = question_type === 'closest_number' ? 'closest_number' : 'binary';
     const r = await pool.query(
-      'INSERT INTO questions (question, category, deadline, option_yes, option_no, created_by, description, institution) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
-      [question, category || 'כללי', deadline || null, option_yes || 'כן', option_no || 'לא', req.user.id, description || '', institution || 'כללי']
+      'INSERT INTO questions (question, category, deadline, option_yes, option_no, created_by, description, institution, question_type, number_unit) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id',
+      [question, category || 'כללי', deadline || null, option_yes || 'כן', option_no || 'לא', req.user.id, description || '', institution || 'כללי', qType, number_unit || '']
     );
     logActivity('question', `סקר חדש פורסם: "${question}"`);
     res.json({ id: r.rows[0].id });
@@ -207,8 +235,7 @@ app.post('/api/questions', adminAuth, async (req, res) => {
 app.post('/api/bet', auth, async (req, res) => {
   const client = await pool.connect();
   try {
-    const { question_id, choice, amount } = req.body;
-    if (!['YES', 'NO'].includes(choice)) return res.status(400).json({ error: 'בחירה לא תקינה' });
+    const { question_id, choice, amount, guess_number } = req.body;
     if (!amount || amount < 10) return res.status(400).json({ error: 'מינימום 10 נק"ז' });
     if (amount > req.user.balance) return res.status(400).json({ error: 'אין מספיק נק"ז' });
 
@@ -216,16 +243,39 @@ app.post('/api/bet', auth, async (req, res) => {
     if (!qRows[0]) return res.status(404).json({ error: 'שאלה לא נמצאה' });
     if (qRows[0].resolved) return res.status(400).json({ error: 'השאלה כבר נסגרה' });
 
+    const qType = qRows[0].question_type || 'binary';
+    let num = null;
+
+    if (qType === 'closest_number') {
+      num = parseFloat(guess_number);
+      if (guess_number === undefined || guess_number === null || guess_number === '' || isNaN(num)) {
+        return res.status(400).json({ error: 'צריך להכניס ניחוש מספרי' });
+      }
+    } else {
+      if (!['YES', 'NO'].includes(choice)) return res.status(400).json({ error: 'בחירה לא תקינה' });
+    }
+
     await client.query('BEGIN');
-    await client.query('INSERT INTO bets (user_id, question_id, choice, amount) VALUES ($1,$2,$3,$4)', [req.user.id, question_id, choice, amount]);
-    if (choice === 'YES') await client.query('UPDATE questions SET yes_volume = yes_volume + $1, yes_count = yes_count + 1 WHERE id = $2', [amount, question_id]);
-    else await client.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [amount, question_id]);
+    if (qType === 'closest_number') {
+      await client.query('INSERT INTO bets (user_id, question_id, guess_number, amount) VALUES ($1,$2,$3,$4)', [req.user.id, question_id, num, amount]);
+    } else {
+      await client.query('INSERT INTO bets (user_id, question_id, choice, amount) VALUES ($1,$2,$3,$4)', [req.user.id, question_id, choice, amount]);
+      if (choice === 'YES') await client.query('UPDATE questions SET yes_volume = yes_volume + $1, yes_count = yes_count + 1 WHERE id = $2', [amount, question_id]);
+      else await client.query('UPDATE questions SET no_volume = no_volume + $1, no_count = no_count + 1 WHERE id = $2', [amount, question_id]);
+    }
     await client.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [amount, req.user.id]);
     await client.query('COMMIT');
 
     const { rows: uRows } = await client.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
-    const choiceLabel = choice === 'YES' ? (qRows[0].option_yes || 'כן') : (qRows[0].option_no || 'לא');
-    logActivity('bet', `${req.user.display_name} הימר ${amount} נק"ז על "${qRows[0].question}" — ${choiceLabel}`);
+    let logMsg;
+    if (qType === 'closest_number') {
+      const unit = qRows[0].number_unit ? ` ${qRows[0].number_unit}` : '';
+      logMsg = `${req.user.display_name} ניחש ${num}${unit} על "${qRows[0].question}" — הימר ${amount} נק"ז`;
+    } else {
+      const choiceLabel = choice === 'YES' ? (qRows[0].option_yes || 'כן') : (qRows[0].option_no || 'לא');
+      logMsg = `${req.user.display_name} הימר ${amount} נק"ז על "${qRows[0].question}" — ${choiceLabel}`;
+    }
+    logActivity('bet', logMsg);
     res.json({ success: true, new_balance: uRows[0].balance });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
@@ -234,11 +284,55 @@ app.post('/api/bet', auth, async (req, res) => {
 app.post('/api/questions/:id/resolve', adminAuth, async (req, res) => {
   const client = await pool.connect();
   try {
-    const { result } = req.body;
-    if (!['YES', 'NO'].includes(result)) return res.status(400).json({ error: 'תוצאה לא תקינה' });
     const { rows: qRows } = await client.query('SELECT * FROM questions WHERE id = $1', [req.params.id]);
     if (!qRows[0]) return res.status(404).json({ error: 'שאלה לא נמצאה' });
     if (qRows[0].resolved) return res.status(400).json({ error: 'כבר נסגרה' });
+
+    const qType = qRows[0].question_type || 'binary';
+
+    if (qType === 'closest_number') {
+      const correctNumber = parseFloat(req.body.correct_number);
+      if (req.body.correct_number === undefined || req.body.correct_number === null || req.body.correct_number === '' || isNaN(correctNumber)) {
+        return res.status(400).json({ error: 'צריך להכניס את המספר הנכון' });
+      }
+
+      const { rows: allBets } = await client.query('SELECT * FROM bets WHERE question_id = $1 ORDER BY id ASC', [qRows[0].id]);
+
+      // מיון לפי קרבה למספר הנכון; שוויון נשבר לפי מי הימר קודם
+      const sorted = [...allBets].sort((a, b) => {
+        const da = Math.abs(a.guess_number - correctNumber);
+        const db = Math.abs(b.guess_number - correctNumber);
+        if (da !== db) return da - db;
+        return a.id - b.id;
+      });
+      const winners = sorted.slice(0, 3);
+      const winnerIds = new Set(winners.map(w => w.id));
+
+      const totalPool   = allBets.reduce((s, b) => s + b.amount, 0);
+      const winnerStake = winners.reduce((s, b) => s + b.amount, 0);
+
+      await client.query('BEGIN');
+      await client.query('UPDATE questions SET resolved = 1, correct_number = $1, resolved_at = NOW() WHERE id = $2', [correctNumber, qRows[0].id]);
+
+      for (const bet of allBets) {
+        if (winnerIds.has(bet.id)) {
+          let payout = winnerStake > 0 ? (bet.amount / winnerStake) * totalPool : bet.amount;
+          if (payout < bet.amount) payout = bet.amount; // זוכה לעולם לא מקבל פחות מהימורו
+          payout = Math.round(payout);
+          await client.query('UPDATE bets SET won = 1, payout = $1 WHERE id = $2', [payout, bet.id]);
+          await client.query('UPDATE users SET balance = balance + $1 WHERE id = $2', [payout, bet.user_id]);
+        } else {
+          await client.query('UPDATE bets SET won = 0, payout = 0 WHERE id = $1', [bet.id]);
+        }
+      }
+      await client.query('COMMIT');
+      logActivity('resolve', `סקר נסגר — "${qRows[0].question}" — המספר הנכון: ${correctNumber}`);
+      return res.json({ success: true });
+    }
+
+    // ===== בינארי (כן/לא) — לוגיקה קיימת ללא שינוי =====
+    const { result } = req.body;
+    if (!['YES', 'NO'].includes(result)) return res.status(400).json({ error: 'תוצאה לא תקינה' });
 
     await client.query('BEGIN');
     await client.query('UPDATE questions SET resolved = 1, result = $1, resolved_at = NOW() WHERE id = $2', [result, qRows[0].id]);
@@ -396,13 +490,14 @@ initSuggestions().then(async () => {
 // Submit suggestion
 app.post('/api/suggestions', async (req, res) => {
   try {
-    const { question, category, option_yes, option_no, department, description, deadline, institution } = req.body;
+    const { question, category, option_yes, option_no, department, description, deadline, institution, question_type, number_unit } = req.body;
     if (!question || question.trim().length < 5)
       return res.status(400).json({ error: 'שאלה קצרה מדי' });
+    const qType = question_type === 'closest_number' ? 'closest_number' : 'binary';
     const { is_draft } = req.body;
     await pool.query(
-      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username, is_draft, description, deadline, institution) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
-      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח', is_draft?1:0, description||'', deadline||null, institution||'כללי']
+      'INSERT INTO suggestions (question, category, option_yes, option_no, department, user_id, username, is_draft, description, deadline, institution, question_type, number_unit) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
+      [question.trim(), category||'כללי', option_yes||'כן', option_no||'לא', department||'', req.user?.id||null, req.user?.display_name||'אורח', is_draft?1:0, description||'', deadline||null, institution||'כללי', qType, number_unit||'']
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -423,8 +518,8 @@ app.post('/api/suggestions/:id/approve', adminAuth, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'לא נמצאה' });
     const s = rows[0];
     await pool.query(
-      'INSERT INTO questions (question, category, option_yes, option_no, department, created_by, institution) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [s.question, s.category, s.option_yes, s.option_no, s.department||'', req.user.id, s.institution||'כללי']
+      'INSERT INTO questions (question, category, option_yes, option_no, department, created_by, institution, description, deadline, question_type, number_unit) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
+      [s.question, s.category, s.option_yes, s.option_no, s.department||'', req.user.id, s.institution||'כללי', s.description||'', s.deadline||null, s.question_type||'binary', s.number_unit||'']
     );
     await pool.query('UPDATE suggestions SET approved = 1 WHERE id = $1', [s.id]);
     res.json({ success: true });
@@ -597,10 +692,11 @@ app.get('/api/questions/:id/chart', async (req, res) => {
 // --- Edit suggestion ---
 app.put('/api/suggestions/:id', adminAuth, async (req, res) => {
   try {
-    const { question, category, option_yes, option_no, department, description, deadline } = req.body;
+    const { question, category, option_yes, option_no, department, description, deadline, institution, question_type, number_unit } = req.body;
+    const qType = question_type === 'closest_number' ? 'closest_number' : 'binary';
     await pool.query(
-      'UPDATE suggestions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7 WHERE id=$8',
-      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, institution||'כללי', req.params.id]
+      'UPDATE suggestions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7, institution=$8, question_type=$9, number_unit=$10 WHERE id=$11',
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, institution||'כללי', qType, number_unit||'', req.params.id]
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -609,12 +705,13 @@ app.put('/api/suggestions/:id', adminAuth, async (req, res) => {
 // --- Approve suggestion with edits (publish or draft) ---
 app.post('/api/suggestions/:id/approve-edited', adminAuth, async (req, res) => {
   try {
-    const { question, category, option_yes, option_no, department, description, deadline, as_draft, institution } = req.body;
+    const { question, category, option_yes, option_no, department, description, deadline, as_draft, institution, question_type, number_unit } = req.body;
+    const qType = question_type === 'closest_number' ? 'closest_number' : 'binary';
 
     // עדכון ההצעה עם הנתונים החדשים
     await pool.query(
-      'UPDATE suggestions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7 WHERE id=$8',
-      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, req.params.id]
+      'UPDATE suggestions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7, institution=$8, question_type=$9, number_unit=$10 WHERE id=$11',
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, institution||'כללי', qType, number_unit||'', req.params.id]
     );
 
     if (as_draft === true) {
@@ -624,8 +721,8 @@ app.post('/api/suggestions/:id/approve-edited', adminAuth, async (req, res) => {
     } else {
       // פרסם — יצירת שאלה חדשה ומחיקת ה-suggestion
       const r = await pool.query(
-        'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by, institution) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
-        [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id, institution||'כללי']
+        'INSERT INTO questions (question, category, deadline, option_yes, option_no, department, description, created_by, institution, question_type, number_unit) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id',
+        [question, category||'כללי', deadline||null, option_yes||'כן', option_no||'לא', department||'', description||'', req.user.id, institution||'כללי', qType, number_unit||'']
       );
       await pool.query('UPDATE suggestions SET approved=1 WHERE id=$1', [req.params.id]);
       logActivity('question', `סקר חדש פורסם: "${question}"`);
@@ -637,10 +734,10 @@ app.post('/api/suggestions/:id/approve-edited', adminAuth, async (req, res) => {
 // --- Edit existing question ---
 app.put('/api/questions/:id', adminAuth, async (req, res) => {
   try {
-    const { question, category, option_yes, option_no, department, description, deadline, institution } = req.body;
+    const { question, category, option_yes, option_no, department, description, deadline, institution, number_unit } = req.body;
     await pool.query(
-      'UPDATE questions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7, institution=$8 WHERE id=$9',
-      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, institution||'כללי', req.params.id]
+      'UPDATE questions SET question=$1, category=$2, option_yes=$3, option_no=$4, department=$5, description=$6, deadline=$7, institution=$8, number_unit=$9 WHERE id=$10',
+      [question, category||'כללי', option_yes||'כן', option_no||'לא', department||'', description||'', deadline||null, institution||'כללי', number_unit||'', req.params.id]
     );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -667,6 +764,7 @@ app.get('/api/archive', async (req, res) => {
         AND (resolved_at IS NULL OR resolved_at < NOW() - INTERVAL '24 hours')
       ORDER BY COALESCE(resolved_at, created_at::TIMESTAMPTZ) DESC
     `);
+    await attachRealStakes(rows);
     res.json({ questions: rows });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });

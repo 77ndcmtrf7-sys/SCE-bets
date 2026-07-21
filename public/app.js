@@ -224,8 +224,9 @@ function renderMarkets(questions) {
     return;
   }
   grid.innerHTML = questions.map(q=>{
-    const total   = q.yes_volume + q.no_volume;
-    const yesPct  = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
+    const isNumberType = q.question_type === 'closest_number';
+    const total   = isNumberType ? (q.number_pool||0) : (q.yes_volume + q.no_volume);
+    const yesPct  = total > 0 && !isNumberType ? Math.round((q.yes_volume / total) * 100) : 50;
     const noPct   = 100 - yesPct;
     const dl      = deadlineInfo(q.deadline);
     const showCountdown = q.deadline && !q.resolved &&
@@ -239,6 +240,28 @@ function renderMarkets(questions) {
          </div>`
       : '';
     const deptTag = q.department ? `<span class="dept-tag">${q.department}</span>` : '';
+
+    const numUnit = q.number_unit ? ` ${q.number_unit}` : '';
+
+    const numberBlock = `
+      <div class="number-guess-block">
+        <div class="number-guess-icon">🔢</div>
+        <div class="number-guess-body">
+          <span class="number-guess-cta">לחצו כדי לנחש את המספר</span>
+          ${q.number_count > 0
+            ? `<span class="number-guess-stat">ממוצע הניחושים עד כה: <strong>${formatMaybeDecimal(q.number_avg)}${numUnit}</strong> · ${q.number_count} ניחושים</span>`
+            : `<span class="number-guess-stat">היו הראשונים לנחש! 🎯</span>`}
+        </div>
+      </div>`;
+
+    const numberResolvedBlock = `
+      <div class="number-guess-block resolved-number">
+        <div class="number-guess-icon">🎯</div>
+        <div class="number-guess-body">
+          <span class="number-guess-cta">המספר הנכון היה</span>
+          <span class="number-guess-result">${formatMaybeDecimal(q.correct_number)}${numUnit}</span>
+        </div>
+      </div>`;
 
     const betBlocksUser = `
       <div class="choice-blocks">
@@ -294,22 +317,30 @@ function renderMarkets(questions) {
       ? q.description.split('\n')[0].slice(0,80) + '...'
       : q.description.split('\n')[0] + (q.description.includes('\n') || q.description.length > 80 ? '...' : '')
     ) : '';
+    const mainBlock = isNumberType
+      ? (q.resolved ? numberResolvedBlock : numberBlock)
+      : (q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest));
+
+    const statsHtml = isNumberType
+      ? `<div class="card-stats-row" dir="rtl"><span class="stat-yes">${q.number_count||0}</span><span class="stat-label">ניחושים</span></div>`
+      : `<div class="card-stats-row" dir="ltr">
+          <span class="stat-yes">${q.yes_count||0}</span>
+          <span class="stat-mid">vs</span>
+          <span class="stat-no">${q.no_count||0}</span>
+          <span class="stat-label">bets</span>
+        </div>`;
+
     return `
     <div class="market-card ${q.resolved?'resolved':''}" data-cat="${q.category||'כללי'}" data-dept="${q.department||''}" data-qid="${q.id}" data-resolved="${q.resolved?1:0}" ${cardBorderStyle}>
       ${q.resolved ? '<div class="closed-ribbon">נסגר</div>' : ''}
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span>${instTag}</div>
       <div class="card-question">${q.question}</div>
       ${shortDesc ? `<div class="card-description">${shortDesc}</div>` : ''}
-      ${q.resolved ? resolvedBlock : (currentUser ? betBlocksUser : betBlocksGuest)}
+      ${mainBlock}
       <div class="card-footer">
         <div class="card-footer-top">
           <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
-          <div class="card-stats-row" dir="ltr">
-            <span class="stat-yes">${q.yes_count||0}</span>
-            <span class="stat-mid">vs</span>
-            <span class="stat-no">${q.no_count||0}</span>
-            <span class="stat-label">bets</span>
-          </div>
+          ${statsHtml}
         </div>
         ${dlHtml}
       </div>
@@ -455,18 +486,31 @@ async function openBetModal(questionId,choice='YES') {
     }
   }
   document.getElementById('modal-error').textContent = '';
-  const optYes = data.question.option_yes || 'כן';
-  const optNo  = data.question.option_no  || 'לא';
-  document.getElementById('modal-label-yes').textContent = optYes;
-  document.getElementById('modal-label-no').textContent  = optNo;
-  document.getElementById('choice-yes').textContent = optYes;
-  document.getElementById('choice-no').textContent  = optNo;
   document.getElementById('bet-amount').value = 100;
   const dlEl=document.getElementById('modal-deadline-info');
   const dl=deadlineInfo(data.question.deadline);
   if(dl){dlEl.textContent='⏱ '+dl.text;dlEl.className=`modal-deadline ${dl.cls}`;}
   else dlEl.textContent='';
-  updateModalOdds(); updateChoiceButtons(); updatePayout();
+
+  const isNumberType = data.question.question_type === 'closest_number';
+  document.getElementById('modal-odds').style.display          = isNumberType ? 'none' : '';
+  document.getElementById('binary-choice-row').style.display    = isNumberType ? 'none' : '';
+  document.getElementById('binary-payout-row').style.display    = isNumberType ? 'none' : '';
+  document.getElementById('number-guess-row').style.display     = isNumberType ? '' : 'none';
+  document.getElementById('number-payout-note').style.display   = isNumberType ? '' : 'none';
+
+  if (isNumberType) {
+    document.getElementById('bet-guess-number').value = '';
+    document.getElementById('number-unit-label').textContent = data.question.number_unit ? `(${data.question.number_unit})` : '';
+  } else {
+    const optYes = data.question.option_yes || 'כן';
+    const optNo  = data.question.option_no  || 'לא';
+    document.getElementById('modal-label-yes').textContent = optYes;
+    document.getElementById('modal-label-no').textContent  = optNo;
+    document.getElementById('choice-yes').textContent = optYes;
+    document.getElementById('choice-no').textContent  = optNo;
+    updateModalOdds(); updateChoiceButtons(); updatePayout();
+  }
   document.getElementById('bet-modal').classList.add('open');
 }
 
@@ -487,6 +531,7 @@ function updateChoiceButtons() {
 
 function updatePayout() {
   if(!currentBetQuestion) return;
+  if(currentBetQuestion.question_type === 'closest_number') return; // אין תצוגת רווח פוטנציאלי לסוג הזה
   const amount=parseFloat(document.getElementById('bet-amount').value)||0;
   const q=currentBetQuestion;
   // הקופה כולה אחרי שההימור ייכנס (כולל אורחים — שכבר בתוך yes_volume/no_volume)
@@ -515,7 +560,18 @@ async function placeBet() {
   const amount=parseInt(document.getElementById('bet-amount').value);
   if(!amount||amount<10) return setModalError('מינימום 10 נק"ז');
   if(amount>currentUser.balance) return setModalError('אין מספיק נק"ז');
-  const res=await fetch(`${API}/api/bet`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question_id:currentBetQuestion.id,choice:currentBetChoice,amount})});
+
+  const isNumberType = currentBetQuestion.question_type === 'closest_number';
+  let body;
+  if (isNumberType) {
+    const guessRaw = document.getElementById('bet-guess-number').value;
+    if (guessRaw === '' || isNaN(parseFloat(guessRaw))) return setModalError('צריך להכניס ניחוש מספרי');
+    body = { question_id: currentBetQuestion.id, guess_number: parseFloat(guessRaw), amount };
+  } else {
+    body = { question_id: currentBetQuestion.id, choice: currentBetChoice, amount };
+  }
+
+  const res=await fetch(`${API}/api/bet`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
   const data=await res.json();
   if(!res.ok) return setModalError(data.error||'שגיאה');
   currentUser.balance=data.new_balance;
@@ -523,7 +579,7 @@ async function placeBet() {
   const mobVal2 = document.getElementById('nav-balance-mobile');
   if (mobVal2) mobVal2.textContent = formatNum(currentUser.balance);
   document.getElementById('bet-modal').classList.remove('open');
-  showToast(`${formatNum(amount)} נק"ז על השולחן. אין דרך חזרה 🎯`, 'success');
+  showToast(isNumberType ? `הניחוש נשלח! ${formatNum(amount)} נק"ז על הכף ⚖️` : `${formatNum(amount)} נק"ז על השולחן. אין דרך חזרה 🎯`, 'success');
   loadMarkets();
 }
 
@@ -543,39 +599,56 @@ function renderArchive(questions) {
     return;
   }
   grid.innerHTML = questions.map(q => {
-    const total  = q.yes_volume + q.no_volume;
-    const yesPct = total > 0 ? Math.round((q.yes_volume / total) * 100) : 50;
+    const isNumberType = q.question_type === 'closest_number';
+    const total  = isNumberType ? (q.number_pool||0) : (q.yes_volume + q.no_volume);
+    const yesPct = total > 0 && !isNumberType ? Math.round((q.yes_volume / total) * 100) : 50;
     const noPct  = 100 - yesPct;
     const catColor = getCategoryColor(q.category);
     const catStyle = catColor ? `style="color:${catColor}"` : '';
     const cardBorderStyle = catColor ? `style="border-top-color:${catColor}"` : '';
     const deptTag = q.department ? `<span class="dept-tag">${q.department}</span>` : '';
     const winnerYes = q.result === 'YES';
+    const numUnit = q.number_unit ? ` ${q.number_unit}` : '';
+
+    const mainBlock = isNumberType
+      ? `<div class="number-guess-block resolved-number">
+          <div class="number-guess-icon">🎯</div>
+          <div class="number-guess-body">
+            <span class="number-guess-cta">המספר הנכון היה</span>
+            <span class="number-guess-result">${formatMaybeDecimal(q.correct_number)}${numUnit}</span>
+          </div>
+        </div>`
+      : `<div class="choice-blocks">
+          <div class="choice-block yes-block ${winnerYes?'winner':'loser'}">
+            <span class="choice-pct">${yesPct}%</span>
+            <span class="choice-label">${q.option_yes||'כן'}</span>
+          </div>
+          <div class="choice-block no-block ${!winnerYes?'winner':'loser'}">
+            <span class="choice-pct">${noPct}%</span>
+            <span class="choice-label">${q.option_no||'לא'}</span>
+          </div>
+        </div>
+        <div class="resolved-badge ${q.result}">${winnerYes?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>`;
+
+    const statsHtml = isNumberType
+      ? `<div class="card-stats-row" dir="rtl"><span class="stat-yes">${q.number_count||0}</span><span class="stat-label">ניחושים</span></div>`
+      : `<div class="card-stats-row" dir="ltr">
+          <span class="stat-yes">${q.yes_count||0}</span>
+          <span class="stat-mid">vs</span>
+          <span class="stat-no">${q.no_count||0}</span>
+          <span class="stat-label">bets</span>
+        </div>`;
+
     return `
     <div class="market-card resolved" data-cat="${q.category||'כללי'}" ${cardBorderStyle}>
       <div class="card-tags-row">${deptTag}<span class="card-category" ${catStyle}>${q.category||'כללי'}</span></div>
       <div class="card-question">${q.question}</div>
       ${q.description ? `<div class="card-description">${q.description}</div>` : ''}
-      <div class="choice-blocks">
-        <div class="choice-block yes-block ${winnerYes?'winner':'loser'}">
-          <span class="choice-pct">${yesPct}%</span>
-          <span class="choice-label">${q.option_yes||'כן'}</span>
-        </div>
-        <div class="choice-block no-block ${!winnerYes?'winner':'loser'}">
-          <span class="choice-pct">${noPct}%</span>
-          <span class="choice-label">${q.option_no||'לא'}</span>
-        </div>
-      </div>
-      <div class="resolved-badge ${q.result}">${winnerYes?'✓ '+(q.option_yes||'כן'):'✗ '+(q.option_no||'לא')} — נסגר</div>
+      ${mainBlock}
       <div class="card-footer">
         <div class="card-footer-top">
           <div class="card-volume">נפח: <span>${formatNum(total)} נק"ז</span></div>
-          <div class="card-stats-row" dir="ltr">
-            <span class="stat-yes">${q.yes_count||0}</span>
-            <span class="stat-mid">vs</span>
-            <span class="stat-no">${q.no_count||0}</span>
-            <span class="stat-label">bets</span>
-          </div>
+          ${statsHtml}
         </div>
       </div>
     </div>`;
@@ -707,6 +780,11 @@ function openEditSuggestionModal(s) {
   document.getElementById('edit-suggestion-opt-yes').value  = s.option_yes || 'כן';
   document.getElementById('edit-suggestion-opt-no').value   = s.option_no  || 'לא';
   document.getElementById('edit-suggestion-deadline').value = s.deadline ? s.deadline.slice(0,16) : '';
+  // סוג שאלה
+  const typeSel = document.getElementById('edit-suggestion-type');
+  typeSel.value = s.question_type === 'closest_number' ? 'closest_number' : 'binary';
+  document.getElementById('edit-suggestion-number-unit').value = s.number_unit || '';
+  toggleEditSuggestionTypeFields();
   // קטגוריה
   const catSel = document.getElementById('edit-suggestion-category');
   const standardCats = ['כללי','הרצאות','בחינות','קפיטריה'];
@@ -725,6 +803,12 @@ function openEditSuggestionModal(s) {
   document.getElementById('edit-suggestion-modal').classList.add('open');
 }
 
+function toggleEditSuggestionTypeFields() {
+  const isNumber = document.getElementById('edit-suggestion-type').value === 'closest_number';
+  document.getElementById('edit-suggestion-binary-options-row').style.display = isNumber ? 'none' : '';
+  document.getElementById('edit-suggestion-number-unit-row').style.display    = isNumber ? '' : 'none';
+}
+
 function closeEditSuggestionModal(e) {
   if (e && e.target !== document.getElementById('edit-suggestion-modal')) return;
   document.getElementById('edit-suggestion-modal').classList.remove('open');
@@ -741,6 +825,8 @@ function getEditSuggestionData() {
     option_no:   document.getElementById('edit-suggestion-opt-no').value.trim()  || 'לא',
     deadline:    document.getElementById('edit-suggestion-deadline').value || null,
     institution: document.getElementById('edit-suggestion-institution')?.value || 'כללי',
+    question_type: document.getElementById('edit-suggestion-type')?.value === 'closest_number' ? 'closest_number' : 'binary',
+    number_unit:   document.getElementById('edit-suggestion-number-unit')?.value.trim() || '',
   };
 }
 
@@ -793,6 +879,14 @@ function openEditQuestionModal(q) {
   document.getElementById('edit-question-opt-yes').value     = q.option_yes || 'כן';
   document.getElementById('edit-question-opt-no').value      = q.option_no  || 'לא';
   document.getElementById('edit-question-deadline').value    = q.deadline ? q.deadline.slice(0,16) : '';
+  // סוג שאלה — קבוע, לא ניתן לשינוי אחרי יצירה (עלול לשבור הימורים קיימים)
+  const isNumber = q.question_type === 'closest_number';
+  document.getElementById('edit-question-type-badge').innerHTML = isNumber
+    ? '🔢 סוג: ניחוש מספר (לא ניתן לשינוי)'
+    : '⚖️ סוג: כן / לא (לא ניתן לשינוי)';
+  document.getElementById('edit-question-binary-options-row').style.display = isNumber ? 'none' : '';
+  document.getElementById('edit-question-number-unit-row').style.display   = isNumber ? '' : 'none';
+  document.getElementById('edit-question-number-unit').value = q.number_unit || '';
   // קטגוריה
   const catSel = document.getElementById('edit-question-category');
   const standardCats = ['כללי','הרצאות','בחינות','קפיטריה'];
@@ -830,9 +924,10 @@ async function saveEditedQuestion() {
   if (!question) { errEl.textContent = 'שאלה לא יכולה להיות ריקה'; return; }
 
   const institution = document.getElementById('edit-question-institution')?.value || 'כללי';
+  const numberUnit  = document.getElementById('edit-question-number-unit')?.value.trim() || '';
   const res = await fetch(`/api/questions/${id}`, {
     method: 'PUT', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, category, department, description, option_yes, option_no, deadline, institution })
+    body: JSON.stringify({ question, category, department, description, option_yes, option_no, deadline, institution, number_unit: numberUnit })
   });
 
   if (res.ok) {
@@ -905,6 +1000,18 @@ function toggleCustomCategory(customInputId, select) {
   }
 }
 
+function toggleQuestionTypeFields() {
+  const isNumber = document.getElementById('new-question-type').value === 'closest_number';
+  document.getElementById('binary-options-row').style.display = isNumber ? 'none' : '';
+  document.getElementById('number-unit-row').style.display    = isNumber ? '' : 'none';
+}
+
+function toggleSuggestQuestionTypeFields() {
+  const isNumber = document.getElementById('suggest-question-type').value === 'closest_number';
+  document.getElementById('suggest-binary-options-row').style.display = isNumber ? 'none' : '';
+  document.getElementById('suggest-number-unit-row').style.display    = isNumber ? '' : 'none';
+}
+
 function getCategory(selectId, customInputId) {
   const select = document.getElementById(selectId);
   if (!select) return 'כללי';
@@ -928,21 +1035,51 @@ function renderAdminQuestions(questions) {
   const list=document.getElementById('admin-questions-list');
   if(!questions.length){list.innerHTML=`<div style="color:var(--text3);font-size:13px;">אין שאלות עדיין</div>`;return;}
   list.innerHTML=questions.map(q=>{
-    const total=q.yes_volume+q.no_volume;
+    const isNumber = q.question_type === 'closest_number';
+    const total = isNumber ? (q.number_pool||0) : (q.yes_volume+q.no_volume);
     const dl=q.deadline?new Date(q.deadline).toLocaleString('he-IL'):null;
+    const unit = q.number_unit ? ` ${q.number_unit}` : '';
+
+    let statusText;
+    if (!q.resolved) statusText = 'פעיל';
+    else if (isNumber) statusText = `נסגר — המספר הנכון: ${formatMaybeDecimal(q.correct_number)}${unit}`;
+    else statusText = `נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`;
+
+    const metaExtra = isNumber ? ` · ${q.number_count||0} ניחושים` : '';
+
+    let actionsHtml;
+    if (!q.resolved && isNumber) {
+      actionsHtml = `
+        <input type="number" step="any" id="resolve-number-${q.id}" class="admin-input admin-input-sm" placeholder="המספר הנכון${unit?' ('+q.number_unit+')':''}" />
+        <button class="admin-q-btn resolve-yes" onclick="resolveNumberQuestion(${q.id})">סגור עם המספר</button>`;
+    } else if (!q.resolved) {
+      actionsHtml = `
+        <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
+        <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`;
+    } else {
+      actionsHtml = `<button class="admin-q-btn archive" onclick="archiveQuestion(${q.id})">📦 לארכיון</button>`;
+    }
+
     return `<div class="admin-q-item">
-      <div class="admin-q-text">${q.question}</div>
-      <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${dl?` · סגירה: ${dl}`:''}  · ${q.resolved?`נסגר — ${q.result==='YES'?(q.option_yes||'כן'):(q.option_no||'לא')}`:'פעיל'}</div>
+      <div class="admin-q-text">${q.question}${isNumber?' <span class="admin-q-type-tag">🔢 ניחוש מספר</span>':''}</div>
+      <div class="admin-q-meta">נפח: ${formatNum(total)} נק"ז${metaExtra}${dl?` · סגירה: ${dl}`:''}  · ${statusText}</div>
       <div class="admin-q-actions">
         <button class="admin-q-btn edit" onclick="openEditQuestionById(${q.id})">✏️ ערוך</button>
-        ${!q.resolved?`
-          <button class="admin-q-btn resolve-yes" onclick="resolveQuestion(${q.id},'YES')">${q.option_yes||'כן'} ניצחה</button>
-          <button class="admin-q-btn resolve-no"  onclick="resolveQuestion(${q.id},'NO')">${q.option_no||'לא'} ניצחה</button>`
-        :`<button class="admin-q-btn archive" onclick="archiveQuestion(${q.id})">📦 לארכיון</button>`}
+        ${actionsHtml}
         <button class="admin-q-btn delete" onclick="deleteQuestion(${q.id})">מחק</button>
       </div>
     </div>`;
   }).join('');
+}
+
+async function resolveNumberQuestion(id) {
+  const input = document.getElementById(`resolve-number-${id}`);
+  const val = parseFloat(input.value);
+  if (input.value === '' || isNaN(val)) { showToast('צריך להכניס מספר תקין', 'error'); return; }
+  if (!confirm(`לסגור את הסקר עם המספר הנכון: ${val}?`)) return;
+  const res=await fetch(`${API}/api/questions/${id}/resolve`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({correct_number:val})});
+  if(res.ok){showToast(`נסגר. מי שניחש נכון — מזל. מי שלא — בניית אופי 💪`,'success');loadAdminQuestions();}
+  else{const d=await res.json();showToast(d.error||'שגיאה','error');}
 }
 
 async function createQuestion(asDraft = false) {
@@ -952,8 +1089,13 @@ async function createQuestion(asDraft = false) {
   const optYes=document.getElementById('new-option-yes').value.trim();
   const optNo =document.getElementById('new-option-no').value.trim();
   const dept  =document.getElementById('new-question-dept').value;
+  const qType = document.getElementById('new-question-type')?.value || 'binary';
+  const numberUnit = document.getElementById('new-question-number-unit')?.value.trim() || '';
   if(!text) return showToast('כתוב שאלה קודם','error');
   if (asDraft) {
+    if (qType === 'closest_number') {
+      return showToast('שמירת טיוטה לסקרי "מספר הכי קרוב" עדיין לא נתמכת — אפשר לפרסם ישירות', 'error');
+    }
     // Save as suggestion (draft)
     const suggestHeaders = { 'Content-Type': 'application/json', ...authHeaders() };
     const res2 = await fetch('/api/suggestions', { method:'POST', headers: suggestHeaders,
@@ -983,7 +1125,7 @@ async function createQuestion(asDraft = false) {
   }
   const descVal = document.getElementById('new-question-description')?.value.trim() || '';
   const institution = document.getElementById('new-question-institution')?.value || 'כללי';
-  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||'',description:descVal,institution})});
+  const res=await fetch(`${API}/api/questions`,{method:'POST',headers:{...authHeaders(),'Content-Type':'application/json'},body:JSON.stringify({question:text,category:category||'כללי',deadline:deadline||null,option_yes:optYes||'כן',option_no:optNo||'לא',department:dept||'',description:descVal,institution,question_type:qType,number_unit:numberUnit})});
   if(res.ok){
     document.getElementById('new-question-text').value='';
     document.getElementById('new-question-category').value='כללי';
@@ -993,6 +1135,8 @@ async function createQuestion(asDraft = false) {
     document.getElementById('new-option-yes').value='';
     document.getElementById('new-option-no').value='';
     document.getElementById('new-question-dept').value='';
+    const unitEl = document.getElementById('new-question-number-unit');
+    if (unitEl) unitEl.value = '';
     showToast('הסקר בשוק! מי אמיץ? 🔥','success'); loadAdminQuestions();
   } else { const d=await res.json(); showToast(d.error||'שגיאה','error'); }
 }
@@ -1103,6 +1247,11 @@ function softRefresh() {
 // ===== UTILS =====
 function authHeaders(){ return {Authorization:`Bearer ${localStorage.getItem('token')}`}; }
 function formatNum(n){ return Number(n).toLocaleString('he-IL'); }
+function formatMaybeDecimal(n){
+  const num = Number(n);
+  const rounded = Math.round(num*100)/100;
+  return rounded.toLocaleString('he-IL');
+}
 function showToast(msg,type='success'){
   const t=document.getElementById('toast');
   t.textContent=msg; t.className=`toast ${type} show`;
@@ -1279,6 +1428,8 @@ async function submitSuggestion() {
   const question   = document.getElementById('suggest-question').value.trim();
   const category    = getCategory('suggest-category','suggest-category-custom');
   const description = document.getElementById('suggest-description')?.value.trim() || '';
+  const questionType = document.getElementById('suggest-question-type')?.value === 'closest_number' ? 'closest_number' : 'binary';
+  const numberUnit    = document.getElementById('suggest-number-unit')?.value.trim() || '';
   const option_yes = document.getElementById('suggest-opt-yes').value.trim();
   const option_no  = document.getElementById('suggest-opt-no').value.trim();
   const errEl      = document.getElementById('suggest-error');
@@ -1292,13 +1443,16 @@ async function submitSuggestion() {
   const res = await fetch('/api/suggestions', {
     method: 'POST',
     headers: sugHeaders,
-    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description, deadline: document.getElementById('suggest-deadline')?.value || null, institution: document.getElementById('suggest-institution')?.value || 'כללי' })
+    body: JSON.stringify({ question, category: category||'כללי', option_yes: option_yes||'כן', option_no: option_no||'לא', department: department||'', description, deadline: document.getElementById('suggest-deadline')?.value || null, institution: document.getElementById('suggest-institution')?.value || 'כללי', question_type: questionType, number_unit: numberUnit })
   });
 
   if (res.ok) {
     document.getElementById('suggest-modal').classList.remove('open');
     document.getElementById('suggest-description').value = '';
     const sdl = document.getElementById('suggest-deadline'); if(sdl) sdl.value='';
+    const sType = document.getElementById('suggest-question-type');
+    if (sType) { sType.value = 'binary'; toggleSuggestQuestionTypeFields(); }
+    const sUnit = document.getElementById('suggest-number-unit'); if(sUnit) sUnit.value='';
     showToast('ההצעה בדרך. המנהל יחליט את גורלה ⚖️', 'success');
   } else {
     const d = await res.json();
@@ -1346,21 +1500,26 @@ function renderAdminSuggestions(suggestions) {
     list.innerHTML = '<div style="color:var(--text3);font-size:13px;">אין הצעות חדשות</div>';
     return;
   }
-  list.innerHTML = suggestions.map(s => `
+  list.innerHTML = suggestions.map(s => {
+    const isNumber = s.question_type === 'closest_number';
+    const optionsText = isNumber
+      ? `ניחוש מספר${s.number_unit ? ` (${s.number_unit})` : ''}`
+      : `אפשרויות: ${s.option_yes} / ${s.option_no}`;
+    return `
     <div class="admin-q-item">
-      <div class="admin-q-text">${s.question}</div>
+      <div class="admin-q-text">${s.question}${isNumber?' <span class="admin-q-type-tag">🔢 ניחוש מספר</span>':''}</div>
       <div class="admin-q-meta">
         ${s.is_draft?'<span style="background:rgba(245,158,11,0.15);color:#f59e0b;border-radius:20px;padding:1px 8px;font-size:11px;margin-left:6px;">טיוטה</span>':''}
         מאת: ${s.username||'אנונימי'} · קטגוריה: ${s.category}
-        · אפשרויות: ${s.option_yes} / ${s.option_no}
+        · ${optionsText}
       </div>
       <div class="admin-q-actions">
         <button class="admin-q-btn edit" onclick="openEditSuggestionById(${s.id})">✏️ ערוך</button>
         <button class="admin-q-btn resolve-yes" onclick="approveSuggestion(${s.id})">✓ אשר וצור סקר</button>
         <button class="admin-q-btn delete" onclick="deleteSuggestion(${s.id})">✗ דחה</button>
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 }
 
 async function approveSuggestion(id) {

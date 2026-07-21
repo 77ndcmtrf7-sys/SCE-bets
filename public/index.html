@@ -209,6 +209,11 @@
       <div class="admin-card admin-create-card">
         <h3>שאלה חדשה</h3>
         <input type="text" id="new-question-text" placeholder="טקסט השאלה..." class="admin-input" />
+        <label class="admin-date-label">סוג שאלה</label>
+        <select id="new-question-type" class="admin-input admin-select" onchange="toggleQuestionTypeFields()">
+          <option value="binary">כן / לא (בינארי)</option>
+          <option value="closest_number">מספר הכי קרוב</option>
+        </select>
         <select id="new-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('new-question-category-custom', this)">
           <option value="כללי">כללי</option>
           <option value="הרצאות">הרצאות</option>
@@ -241,10 +246,16 @@
         </select>
         <label class="admin-date-label">תאריך סגירה <span class="optional-tag">אופציונלי</span></label>
         <input type="datetime-local" id="new-question-deadline" class="admin-input" />
-        <label class="admin-date-label">אפשרויות בחירה</label>
-        <div class="admin-options-row">
-          <input type="text" id="new-option-yes" placeholder='אפשרות "כן" (ברירת מחדל: כן)' class="admin-input admin-opt-input" />
-          <input type="text" id="new-option-no"  placeholder='אפשרות "לא" (ברירת מחדל: לא)' class="admin-input admin-opt-input" />
+        <div id="binary-options-row">
+          <label class="admin-date-label">אפשרויות בחירה</label>
+          <div class="admin-options-row">
+            <input type="text" id="new-option-yes" placeholder='אפשרות "כן" (ברירת מחדל: כן)' class="admin-input admin-opt-input" />
+            <input type="text" id="new-option-no"  placeholder='אפשרות "לא" (ברירת מחדל: לא)' class="admin-input admin-opt-input" />
+          </div>
+        </div>
+        <div id="number-unit-row" style="display:none;">
+          <label class="admin-date-label">יחידת מידה <span class="optional-tag">אופציונלי</span></label>
+          <input type="text" id="new-question-number-unit" placeholder='למשל: "פעמים", "דקות"...' class="admin-input" />
         </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="admin-btn" onclick="createQuestion(false)" style="flex:1;">פרסם עכשיו</button>
@@ -287,6 +298,11 @@
     <p style="font-size:13px;color:var(--text2);margin-bottom:18px;padding-right:8px;">ההצעה תישלח למנהל לאישור</p>
     <div class="bet-controls">
       <input type="text" id="suggest-question" placeholder="מה השאלה? למשל: האם המרצה יגיע בזמן?" class="admin-input" />
+      <label class="admin-date-label" style="padding-right:4px;">סוג שאלה</label>
+      <select id="suggest-question-type" class="admin-input admin-select" onchange="toggleSuggestQuestionTypeFields()">
+        <option value="binary">כן / לא (בינארי)</option>
+        <option value="closest_number">מספר הכי קרוב</option>
+      </select>
       <select id="suggest-category" class="admin-input admin-select" onchange="toggleCustomCategory('suggest-category-custom', this)">
         <option value="כללי">כללי</option>
         <option value="הרצאות">הרצאות</option>
@@ -311,13 +327,19 @@
       </select>
       <label class="admin-date-label" style="padding-right:4px;">תיאור <span class="optional-tag">אופציונלי</span></label>
       <textarea id="suggest-description" class="admin-input" placeholder="הקשר או פרטים נוספים..." rows="2" style="resize:vertical;"></textarea>
-      <div class="bet-amount-row">
-        <label>אפשרות א</label>
-        <input type="text" id="suggest-opt-yes" placeholder='כן' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
+      <div id="suggest-binary-options-row">
+        <div class="bet-amount-row">
+          <label>אפשרות א</label>
+          <input type="text" id="suggest-opt-yes" placeholder='כן' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
+        </div>
+        <div class="bet-amount-row">
+          <label>אפשרות ב</label>
+          <input type="text" id="suggest-opt-no" placeholder='לא' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
+        </div>
       </div>
-      <div class="bet-amount-row">
-        <label>אפשרות ב</label>
-        <input type="text" id="suggest-opt-no" placeholder='לא' class="bet-input" style="border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:10px 14px;font-family:Rubik,sans-serif;" />
+      <div id="suggest-number-unit-row" style="display:none;">
+        <label class="admin-date-label" style="padding-right:4px;">יחידת מידה <span class="optional-tag">אופציונלי</span></label>
+        <input type="text" id="suggest-number-unit" placeholder='למשל: "פעמים", "דקות"...' class="admin-input" />
       </div>
       <label class="admin-date-label inst-hidden" style="padding-right:4px;">מוסד</label>
       <select id="suggest-institution" class="admin-input admin-select inst-hidden">
@@ -367,7 +389,7 @@
     <h2 id="modal-question-text"></h2>
     <p id="modal-description" class="modal-description" style="display:none"></p>
     <div id="modal-deadline-info" class="modal-deadline"></div>
-    <div class="modal-odds">
+    <div id="modal-odds" class="modal-odds">
       <div class="odds-block yes">
         <div class="odds-label" id="modal-label-yes">כן</div>
         <div class="odds-val" id="modal-yes-pct">—%</div>
@@ -378,9 +400,13 @@
       </div>
     </div>
     <div class="bet-controls">
-      <div class="bet-choice">
+      <div class="bet-choice" id="binary-choice-row">
         <button class="choice-btn yes active" id="choice-yes" onclick="selectChoice('YES')">כן</button>
         <button class="choice-btn no" id="choice-no" onclick="selectChoice('NO')">לא</button>
+      </div>
+      <div class="bet-amount-row" id="number-guess-row" style="display:none;">
+        <label>הניחוש שלך <span id="number-unit-label"></span></label>
+        <input type="number" id="bet-guess-number" step="any" class="bet-input" placeholder="הכנס מספר..." inputmode="decimal" />
       </div>
       <div class="bet-amount-row">
         <label>סכום</label>
@@ -389,9 +415,12 @@
           <span class="amount-unit">נק"ז</span>
         </div>
       </div>
-      <div class="bet-payout">
+      <div class="bet-payout" id="binary-payout-row">
         <span>פוטנציאל רווח</span>
         <span id="bet-payout-val" class="payout-val">—</span>
+      </div>
+      <div class="number-payout-note" id="number-payout-note" style="display:none;">
+        🎯 שלושת הניחושים הכי קרובים למספר האמיתי יתחלקו בקופה, כל אחד לפי גודל ההימור שלו
       </div>
       <button class="place-bet-btn" onclick="placeBet()">אני בטוח! 🎯</button>
     </div>
@@ -411,6 +440,11 @@
     <div class="bet-controls">
       <label class="admin-date-label">שאלה</label>
       <input type="text" id="edit-suggestion-question" class="admin-input" />
+      <label class="admin-date-label">סוג שאלה</label>
+      <select id="edit-suggestion-type" class="admin-input admin-select" onchange="toggleEditSuggestionTypeFields()">
+        <option value="binary">כן / לא (בינארי)</option>
+        <option value="closest_number">מספר הכי קרוב</option>
+      </select>
       <label class="admin-date-label">קטגוריה</label>
       <select id="edit-suggestion-category" class="admin-input admin-select" onchange="toggleCustomCategory('edit-suggestion-category-custom', this)">
         <option value="כללי">כללי</option>
@@ -436,10 +470,16 @@
       </select>
       <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
       <textarea id="edit-suggestion-description" class="admin-input" rows="2" style="resize:vertical;"></textarea>
-      <label class="admin-date-label">אפשרות א</label>
-      <input type="text" id="edit-suggestion-opt-yes" class="admin-input" />
-      <label class="admin-date-label">אפשרות ב</label>
-      <input type="text" id="edit-suggestion-opt-no" class="admin-input" />
+      <div id="edit-suggestion-binary-options-row">
+        <label class="admin-date-label">אפשרות א</label>
+        <input type="text" id="edit-suggestion-opt-yes" class="admin-input" />
+        <label class="admin-date-label">אפשרות ב</label>
+        <input type="text" id="edit-suggestion-opt-no" class="admin-input" />
+      </div>
+      <div id="edit-suggestion-number-unit-row" style="display:none;">
+        <label class="admin-date-label">יחידת מידה <span class="optional-tag">אופציונלי</span></label>
+        <input type="text" id="edit-suggestion-number-unit" class="admin-input" placeholder='למשל: "פעמים", "דקות"...' />
+      </div>
       <label class="admin-date-label inst-hidden">מוסד</label>
       <select id="edit-suggestion-institution" class="admin-input admin-select inst-hidden">
         <option value="כללי">כללי</option>
@@ -466,6 +506,7 @@
     <div class="bet-controls">
       <label class="admin-date-label">שאלה</label>
       <input type="text" id="edit-question-text" class="admin-input" />
+      <div id="edit-question-type-badge" class="edit-type-badge"></div>
       <label class="admin-date-label">קטגוריה</label>
       <select id="edit-question-category" class="admin-input admin-select" onchange="toggleCustomCategory('edit-question-category-custom', this)">
         <option value="כללי">כללי</option>
@@ -491,10 +532,16 @@
       </select>
       <label class="admin-date-label">תיאור <span class="optional-tag">אופציונלי</span></label>
       <textarea id="edit-question-description" class="admin-input" rows="2" style="resize:vertical;"></textarea>
-      <label class="admin-date-label">אפשרות א (כן)</label>
-      <input type="text" id="edit-question-opt-yes" class="admin-input" />
-      <label class="admin-date-label">אפשרות ב (לא)</label>
-      <input type="text" id="edit-question-opt-no" class="admin-input" />
+      <div id="edit-question-binary-options-row">
+        <label class="admin-date-label">אפשרות א (כן)</label>
+        <input type="text" id="edit-question-opt-yes" class="admin-input" />
+        <label class="admin-date-label">אפשרות ב (לא)</label>
+        <input type="text" id="edit-question-opt-no" class="admin-input" />
+      </div>
+      <div id="edit-question-number-unit-row" style="display:none;">
+        <label class="admin-date-label">יחידת מידה <span class="optional-tag">אופציונלי</span></label>
+        <input type="text" id="edit-question-number-unit" class="admin-input" placeholder='למשל: "פעמים", "דקות"...' />
+      </div>
       <label class="admin-date-label inst-hidden">מוסד</label>
       <select id="edit-question-institution" class="admin-input admin-select inst-hidden">
         <option value="כללי">כללי</option>
